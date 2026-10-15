@@ -26,6 +26,20 @@ export const featureSettingsSchema = z.object({
   /** Public automatic pricing. MUST stay false until Express Bags approves real rates (Master Req. §16) */
   pricingEnabled: z.boolean(),
   hubspotSyncEnabled: z.boolean(),
+  /** Online booking + checkout for instantly priced orders (requires pricingEnabled) */
+  instantBookingEnabled: z.boolean().default(false),
+  /** Optional luggage protection tiers + claims (OFF until Florida legal structure is approved) */
+  protectionEnabled: z.boolean().default(false),
+  /** Nationwide carrier shipping quotes/labels (requires Express Bags carrier accounts) */
+  carrierShippingEnabled: z.boolean().default(false),
+  /** SMS/WhatsApp customer notifications */
+  smsEnabled: z.boolean().default(false),
+  /** Website AI assistant (English + Spanish) */
+  aiAssistantEnabled: z.boolean().default(true),
+  /** QuickBooks Online sync */
+  quickbooksSyncEnabled: z.boolean().default(false),
+  /** Post-delivery satisfaction survey + review request */
+  surveysEnabled: z.boolean().default(true),
 });
 
 export const thresholdsSchema = z.object({
@@ -43,7 +57,7 @@ export type FeatureSettings = z.infer<typeof featureSettingsSchema>;
 
 export const DEFAULT_SETTINGS = {
   contact: { emailLive: false, notifyEmail: "" } as ContactSettings,
-  features: { pricingEnabled: false, hubspotSyncEnabled: false } as FeatureSettings,
+  features: { pricingEnabled: false, hubspotSyncEnabled: false, instantBookingEnabled: false, protectionEnabled: false, carrierShippingEnabled: false, smsEnabled: false, aiAssistantEnabled: true, quickbooksSyncEnabled: false, surveysEnabled: true } as FeatureSettings,
   thresholds: DEFAULT_THRESHOLDS as DecisionThresholds,
 };
 
