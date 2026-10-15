@@ -59,6 +59,7 @@ const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
     { href: "/admin/settings", label: "Settings & pricing", Icon: Settings, roles: OPS.concat("ACCOUNTING") },
     { href: "/admin/reference", label: "Markets & zones", Icon: MapPinned, roles: ["OWNER", "STAFF"] },
     { href: "/admin/users", label: "Users & security", Icon: KeyRound, roles: ["OWNER"] },
+    { href: "/admin/users/me", label: "My security", Icon: ShieldCheck, roles: ALL },
   ] },
 ];
 
@@ -84,8 +85,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    api<{ user: AdminUser }>("/auth/me")
-      .then((r) => setUser(r.user))
+    api<{ user: AdminUser & { mustChangePassword?: boolean } }>("/auth/me")
+      .then((r) => {
+        setUser(r.user);
+        // Force a password change (e.g. after an admin reset) before using the admin
+        if (r.user.mustChangePassword && !pathname.startsWith("/admin/users/me")) router.replace("/admin/users/me?change=1");
+      })
       .catch((e: ApiError) => {
         if (e.status === 401) router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
         else setError(e.message);
@@ -120,7 +125,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => n.roles.includes(user.role)) })).filter((g) => g.items.length);
-  const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
+  const isActive = (href: string) =>
+    href === "/admin" ? pathname === "/admin" : href === "/admin/users" ? pathname === href || (pathname.startsWith(href + "/") && !pathname.startsWith("/admin/users/me")) : pathname.startsWith(href);
 
   const sidebar = (
     <nav aria-label="Admin" className="flex h-full flex-col">

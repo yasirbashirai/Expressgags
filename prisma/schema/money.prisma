@@ -1,0 +1,56 @@
+// Money module additions (quotations, invoices, payments, accounting sync).
+// Existing commerce models live in commerce.prisma; these tables only add what they need.
+
+/// Atomic counters (e.g. invoice numbering EB-INV-000001). Incremented with INSERT … ON CONFLICT.
+model MoneySequence {
+  name  String @id
+  value Int    @default(0)
+}
+
+/// Service details a quotation converts into an order (route, schedule, pieces).
+/// Prefilled from the quote request when one exists; entered in the builder otherwise.
+model QuotationDetails {
+  quotationId String   @id
+  serviceType String
+  fulfillment String   @default("local") /// local | nationwide | storage | custom
+  pickup      Json     /// { type, address, facility?, market, notes? }
+  delivery    Json
+  extraStops  Json?
+  serviceDate DateTime
+  timeWindow  String?
+  market      String
+  /// [{ category, quantity, description?, weightLbs?, lengthIn?, widthIn?, heightIn? }]
+  items       Json
+  companyId   String?
+  poNumber    String?
+  costCenter  String?
+  updatedAt   DateTime @updatedAt
+}
+
+/// Snapshot of a quotation before each revision (version history; the live row keeps the current version).
+model QuotationRevision {
+  id          String   @id @default(cuid())
+  quotationId String
+  version     Int
+  snapshot    Json
+  reason      String?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+
+  @@unique([quotationId, version])
+  @@index([quotationId])
+}
+
+/// Outbound accounting/payment sync attempts (QuickBooks) — one row per attempt, for retry and audit.
+model AccountingSyncLog {
+  id        String   @id @default(cuid())
+  provider  String   /// quickbooks | mock
+  entity    String   /// customer | invoice | payment
+  entityId  String
+  status    String   /// SYNCED | FAILED | SKIPPED
+  remoteId  String?
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}

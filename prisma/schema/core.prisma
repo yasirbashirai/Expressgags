@@ -40,6 +40,13 @@ model User {
   failedLogins Int        @default(0)
   lockedUntil  DateTime?
   mustChangePassword Boolean @default(false)
+  /// Incremented on password change / forced sign-out; sessions carrying an older version are rejected
+  tokenVersion Int        @default(0)
+  passwordChangedAt DateTime?
+  /// Hashed single-use 2FA recovery codes (sha256)
+  totpRecoveryCodes String[]
+  /// Last accepted TOTP time step (prevents code replay)
+  totpLastStep Int?
   auditLogs    AuditLog[]
   notes        QuoteNote[]
   employee     Employee?

@@ -13,5 +13,7 @@ export default defineConfig({
     environment: "node",
     include: ["**/__tests__/**/*.test.ts", "src/**/*.test.ts"],
     exclude: ["node_modules/**", ".next*/**", "dist/**"],
+    // API tests share one local Postgres (Prisma dev server allows a single connection) → run files serially
+    fileParallelism: false,
   },
 });

@@ -5,7 +5,7 @@ import { SITE_URL } from "@/lib/seo";
 /** All public routes. /admin and /api are excluded (see robots.ts). */
 const STATIC = [
   "/", "/about", "/our-history", "/notable-projects", "/industries", "/fleet", "/business-accounts", "/gallery",
-  "/testimonials", "/faq", "/resources", "/careers", "/blog", "/contact", "/request-a-quote", "/track", "/client-login",
+  "/testimonials", "/faq", "/resources", "/careers", "/blog", "/contact", "/request-a-quote", "/track",
   "/privacy-policy", "/terms", "/accessibility", "/services", "/service-areas", "/airports", "/ports",
 ];
 

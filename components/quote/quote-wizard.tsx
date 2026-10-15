@@ -82,6 +82,24 @@ export function QuoteWizard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // "Book this again" from the customer portal: ?repeat=<orderId> loads a draft built from that order
+  // (the portal API checks the signed-in customer owns it). Dates and confirmations stay blank.
+  useEffect(() => {
+    const repeat = params.get("repeat");
+    if (!repeat || !/^[a-z0-9]{10,40}$/i.test(repeat)) return;
+    fetch(`${API_URL}/v1/account/orders/${repeat}/repeat-draft`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const revived = body?.draft ? reviveDraft(body.draft) : null;
+        if (revived) {
+          setDraft(revived);
+          setStepIndex(revived.serviceType ? 1 : 0);
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Persist draft
   useEffect(() => {
     if (!hydrated || status.kind === "done") return;

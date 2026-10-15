@@ -1,0 +1,17 @@
+// Customer portal: account access state (activation, pending passwords, deactivation by a company admin).
+// Kept separate from Customer so the portal module owns it (no relation field on Customer needed).
+
+model CustomerAccess {
+  /// Customer.id
+  customerId          String    @id
+  /// PENDING (registered, email not yet verified) | ACTIVE | DEACTIVATED
+  status              String    @default("PENDING")
+  /// Password chosen at registration; becomes Customer.passwordHash only after the email is verified
+  /// AND the same password is re-entered on the verification page (prevents account pre-claiming).
+  pendingPasswordHash String?
+  invitedByCustomerId String?
+  deactivatedAt       DateTime?
+  deactivatedBy       String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}

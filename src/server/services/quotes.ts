@@ -29,7 +29,14 @@ export function marketName(slug: string) {
   return markets.find((m) => m.slug === slug)?.name ?? slug;
 }
 
-export async function createQuote(input: QuoteRequest, meta: { ip?: string; userAgent?: string }) {
+/**
+ * Optional links for requests made by signed-in portal users (concierge desk, company accounts):
+ * attach to an existing customer/company instead of matching by email, and merge extra
+ * fields (PO number, cost center, guest name/room…) into the stored payload.
+ */
+export type QuoteLinkOptions = { customerId?: string; companyId?: string | null; extraPayload?: Record<string, unknown>; actor?: string };
+
+export async function createQuote(input: QuoteRequest, meta: { ip?: string; userAgent?: string }, opts: QuoteLinkOptions = {}) {
   const thresholds = await getSetting("thresholds");
   const features = await getSetting("features");
   const contactSettings = await getSetting("contact");
@@ -41,12 +48,18 @@ export async function createQuote(input: QuoteRequest, meta: { ip?: string; user
 
   const email = input.contact.email.toLowerCase();
   const domain = emailDomain(email);
-  const company = input.contact.company
+  const company = opts.customerId
+    ? opts.companyId
+      ? await prisma.company.findUnique({ where: { id: opts.companyId } })
+      : null
+    : input.contact.company
     ? domain
       ? await prisma.company.upsert({ where: { domain }, update: {}, create: { name: input.contact.company, domain, market: input.pickup.market } })
       : await prisma.company.create({ data: { name: input.contact.company, market: input.pickup.market } })
     : null;
-  const customer = await prisma.customer.upsert({
+  const customer = opts.customerId
+    ? await prisma.customer.findUniqueOrThrow({ where: { id: opts.customerId } })
+    : await prisma.customer.upsert({
     where: { email },
     update: { name: input.contact.name, phone: input.contact.phone, preferredContact: input.contact.preferredContact, companyId: company?.id ?? undefined },
     create: { email, name: input.contact.name, phone: input.contact.phone, preferredContact: input.contact.preferredContact, companyId: company?.id },
@@ -65,13 +78,13 @@ export async function createQuote(input: QuoteRequest, meta: { ip?: string; user
       totalPieces: decision.totalPieces,
       leadSource: input.leadSource,
       billingType: input.billingType,
-      payload: input as object,
+      payload: (opts.extraPayload ? { ...input, ...opts.extraPayload } : input) as object,
       customerId: customer.id,
       companyId: company?.id,
       hubspotSyncStatus: features.hubspotSyncEnabled ? "PENDING" : "DISABLED",
       ipHash: meta.ip ? createHash("sha256").update(env.ipHashSalt + meta.ip).digest("hex").slice(0, 32) : undefined,
       userAgent: meta.userAgent?.slice(0, 300),
-      events: { create: { type: "created", detail: `Routed as ${decision.route}: ${decision.reasons.join("; ")}`, actor: "website" } },
+      events: { create: { type: "created", detail: `Routed as ${decision.route}: ${decision.reasons.join("; ")}`, actor: opts.actor ?? "website" } },
     },
   });
 

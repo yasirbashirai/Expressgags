@@ -7,6 +7,7 @@ import { LUGGAGE_CATEGORY_LABELS, type QuoteRequest } from "@/lib/quote-schema";
 import { api, API_URL, dateTime, money } from "./api";
 import { AdminTitle, Panel, useAdminUser } from "./admin-shell";
 import { Badge, marketLabel, ROUTE_LABEL, ROUTE_STYLE, serviceLabel, STATUS_STYLE } from "./labels";
+import { ConvertQuoteButton } from "@/components/ops/convert-quote-button";
 
 type Detail = {
   id: string;
@@ -109,6 +110,10 @@ export function QuoteDetail({ id }: { id: string }) {
         sub={`${serviceLabel(q.serviceType)} · received ${dateTime(q.createdAt)}`}
         actions={
           <>
+            {(user?.role === "OWNER" || user?.role === "STAFF") && (
+              <Link href={`/admin/quotations/new?quoteRequestId=${q.id}`} className="btn-primary !px-4 !py-2">Build quotation</Link>
+            )}
+            {user?.role !== "ACCOUNTING" && <ConvertQuoteButton quoteId={q.id} />}
             <Badge className={ROUTE_STYLE[q.route]}>{ROUTE_LABEL[q.route]}</Badge>
             <Badge className={STATUS_STYLE[q.status]}>{q.status}</Badge>
           </>

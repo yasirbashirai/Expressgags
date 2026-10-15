@@ -9,7 +9,7 @@ export default defineConfig({
   testDir: "tests/e2e",
   timeout: 60_000,
   fullyParallel: false,
-  workers: 2,
+  workers: 1,
   reporter: [["list"]],
   use: { baseURL: "http://localhost:3000", channel: "chrome", trace: "retain-on-failure" },
   webServer: [

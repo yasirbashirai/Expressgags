@@ -3,7 +3,7 @@ import { SITE_URL } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: ["/admin", "/api"] }],
+    rules: [{ userAgent: "*", allow: "/", disallow: ["/admin", "/api", "/account", "/driver", "/q/", "/invoice/", "/pay/"] }],
     sitemap: new URL("/sitemap.xml", SITE_URL).toString(),
     host: SITE_URL,
   };

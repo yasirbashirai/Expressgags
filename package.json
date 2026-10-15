@@ -18,7 +18,8 @@
     "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:content",
     "postinstall": "prisma generate",
     "api:start": "tsx src/server/index.ts",
-    "db:sync": "node scripts/db-sync.mjs"
+    "db:sync": "node scripts/db-sync.mjs",
+    "reminders": "tsx scripts/run-reminders.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",

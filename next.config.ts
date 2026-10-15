@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      {
+        // Driver app needs the camera (bag-tag QR scanning, condition photos) and GPS (scan locations).
+        // Listed after the global rule so it overrides Permissions-Policy for /driver only.
+        source: "/driver/:path*",
+        headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self)" }],
+      },
     ];
   },
 };

@@ -1,0 +1,15 @@
+// Driver app — idempotency log so offline replays of driver actions never duplicate scans, proofs or status changes.
+
+model DriverActionLog {
+  /// Client-generated idempotency key (UUID) sent in the Idempotency-Key header
+  key         String   @id
+  employeeId  String?
+  userId      String
+  action      String
+  orderId     String?
+  status      Int
+  response    Json
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+}

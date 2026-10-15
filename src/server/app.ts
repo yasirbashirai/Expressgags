@@ -12,11 +12,11 @@ import { adminRouter } from "./routes/admin";
 import { publicRouter } from "./routes/public";
 import { platformModules } from "./modules";
 
-/** Allowed browser origins: WEB_ORIGIN list + local dev ports 3000–3299. */
+/** Allowed browser origins: WEB_ORIGIN list + local dev ports 3000–3499. */
 function originAllowed(origin: string | undefined) {
   if (!origin) return true; // server-to-server, curl
   if (env.webOrigins.includes(origin)) return true;
-  if (!/^http:\/\/(localhost|127\.0\.0\.1):3[0-2]\d\d$/.test(origin)) return false;
+  if (!/^http:\/\/(localhost|127\.0\.0\.1):3[0-4]\d\d$/.test(origin)) return false;
   return env.nodeEnv !== "production";
 }
 

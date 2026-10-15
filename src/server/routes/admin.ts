@@ -8,7 +8,11 @@ import { resolve, join } from "node:path";
 import { z } from "zod";
 import { notableProjects } from "@/content/site";
 import { quoteRequestSchema, type QuoteRequest } from "@/lib/quote-schema";
-import { audit, clearSession, issueSession, requireAuth, requireRole, verifyPassword } from "../auth";
+import {
+  LOCKOUT_MINUTES, assertPasswordOk, audit, checkTotp, clearSession, consumeAuthToken, createAuthToken, hashRecoveryCode, issueSession, peekAuthToken,
+  recordFailedLogin, requireAuth, requireRole, setUserPassword, verifyPassword, webBaseUrl,
+} from "../auth";
+import { brandedHtml, sendMail } from "../lib/email";
 import { prisma } from "../db";
 import type { Prisma } from "../generated/prisma/client";
 import { decideRoute } from "../engines/decision-engine";
@@ -35,16 +39,58 @@ adminRouter.post(
   "/auth/login",
   loginLimiter,
   asyncHandler(async (req, res) => {
-    const { email, password } = z.object({ email: z.string().email(), password: z.string().min(1).max(200) }).parse(req.body);
+    const { email, password, totp, recoveryCode } = z
+      .object({ email: z.string().email(), password: z.string().min(1).max(200), totp: z.string().max(12).optional(), recoveryCode: z.string().max(20).optional() })
+      .parse(req.body);
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-    // Same error for unknown email and wrong password
-    if (!user || !user.active || !(await verifyPassword(password, user.passwordHash))) throw new HttpError(401, "Email or password is incorrect.");
-    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const invalid = new HttpError(401, "Email or password is incorrect.");
+    if (!user || !user.active) {
+      await verifyPassword(password, "$2a$12$CwTycUXWue0Thq9StjUM0uJ8.vH2xDzoP2iC1aHcmP7DzVNcCz0hW"); // equal timing
+      throw invalid;
+    }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new HttpError(423, `Too many failed sign-in attempts. Please try again in ${LOCKOUT_MINUTES} minutes or reset your password.`);
+    }
+    if (!(await verifyPassword(password, user.passwordHash))) {
+      const locked = await recordFailedLogin(user.id);
+      await prisma.auditLog.create({ data: { userId: user.id, action: locked ? "login-locked" : "login-failed", entity: "user", entityId: user.id } });
+      if (locked) throw new HttpError(423, `Too many failed sign-in attempts. Please try again in ${LOCKOUT_MINUTES} minutes or reset your password.`);
+      throw invalid;
+    }
+
+    // Two-factor: password is right, now require a TOTP (or a single-use recovery code)
+    let totpStep: number | null = null;
+    let remainingCodes: string[] | null = null;
+    if (user.totpEnabled && user.totpSecret) {
+      if (!totp && !recoveryCode) return res.json({ ok: true, twoFactorRequired: true });
+      if (totp) totpStep = checkTotp(user.totpSecret, totp, user.totpLastStep);
+      if (totpStep === null && recoveryCode) {
+        const h = hashRecoveryCode(recoveryCode);
+        if (user.totpRecoveryCodes.includes(h)) remainingCodes = user.totpRecoveryCodes.filter((c) => c !== h);
+      }
+      if (totpStep === null && remainingCodes === null) {
+        const locked = await recordFailedLogin(user.id);
+        await prisma.auditLog.create({ data: { userId: user.id, action: "login-2fa-failed", entity: "user", entityId: user.id } });
+        if (locked) throw new HttpError(423, `Too many failed sign-in attempts. Please try again in ${LOCKOUT_MINUTES} minutes.`);
+        throw new HttpError(401, "That code is not valid. Check your authenticator app and try again.", [{ path: "totp", message: "Invalid code" }]);
+      }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+        failedLogins: 0,
+        lockedUntil: null,
+        ...(totpStep !== null ? { totpLastStep: totpStep } : {}),
+        ...(remainingCodes !== null ? { totpRecoveryCodes: remainingCodes } : {}),
+      },
+    });
     const authUser = { id: user.id, email: user.email, role: user.role, name: user.name };
-    issueSession(res, authUser);
+    issueSession(res, { ...authUser, tokenVersion: updated.tokenVersion });
     req.user = authUser;
-    await audit(req, "login", "user", user.id);
-    res.json({ ok: true, user: authUser });
+    await audit(req, remainingCodes !== null ? "login-recovery-code" : "login", "user", user.id);
+    res.json({ ok: true, user: { ...authUser, totpEnabled: user.totpEnabled, mustChangePassword: user.mustChangePassword }, recoveryCodesLeft: remainingCodes?.length });
   }),
 );
 
@@ -53,11 +99,74 @@ adminRouter.post("/auth/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
+/** Forgot password: always answers the same way (no account enumeration). */
+adminRouter.post(
+  "/auth/forgot",
+  loginLimiter,
+  asyncHandler(async (req, res) => {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (user && user.active) {
+      const token = await createAuthToken("password-reset", "user", user.id, 60);
+      const link = `${webBaseUrl()}/admin/reset-password?token=${encodeURIComponent(token)}`;
+      await sendMail({
+        to: user.email,
+        subject: "Reset your Express Bags admin password",
+        text: `A password reset was requested for your Express Bags admin account.\n\nSet a new password (link valid for 1 hour, single use):\n${link}\n\nIf you did not request this, ignore this email.`,
+        html: brandedHtml("Reset your admin password", ["A password reset was requested for your Express Bags admin account.", `Set a new password here (valid for 1 hour, single use): ${link}`, "If you did not request this, you can ignore this email."]),
+      });
+      await prisma.auditLog.create({ data: { userId: user.id, action: "password-reset-requested", entity: "user", entityId: user.id } });
+    }
+    res.json({ ok: true, message: "If that email belongs to a staff account, a reset link is on its way." });
+  }),
+);
+
+/** Checks a reset / invite link before showing the set-password form. */
+adminRouter.get(
+  "/auth/token",
+  asyncHandler(async (req, res) => {
+    const { token } = z.object({ token: z.string().min(10).max(200) }).parse(req.query);
+    const row = await peekAuthToken(token, ["password-reset", "invite"], "user");
+    if (!row) throw new HttpError(400, "This link is invalid or has expired. Please request a new one.");
+    const user = await prisma.user.findUnique({ where: { id: row.subjectId } });
+    if (!user || !user.active) throw new HttpError(400, "This link is invalid or has expired. Please request a new one.");
+    res.json({ ok: true, purpose: row.purpose, email: user.email });
+  }),
+);
+
+/** Sets a password from a reset or invite link (single use, ends all other sessions). */
+adminRouter.post(
+  "/auth/reset",
+  loginLimiter,
+  asyncHandler(async (req, res) => {
+    const { token, password } = z.object({ token: z.string().min(10).max(200), password: z.string().min(1).max(200) }).parse(req.body);
+    const peek = await peekAuthToken(token, ["password-reset", "invite"], "user");
+    if (!peek) throw new HttpError(400, "This link is invalid or has expired. Please request a new one.");
+    const user = await prisma.user.findUnique({ where: { id: peek.subjectId } });
+    if (!user || !user.active) throw new HttpError(400, "This link is invalid or has expired. Please request a new one.");
+    assertPasswordOk(password, user.email); // validate before burning the token
+    const row = await consumeAuthToken(token, ["password-reset", "invite"], "user");
+    await setUserPassword(user.id, user.email, password);
+    await prisma.auditLog.create({ data: { userId: user.id, action: row.purpose === "invite" ? "invite-accepted" : "password-reset", entity: "user", entityId: user.id } });
+    res.json({ ok: true });
+  }),
+);
+
 adminRouter.use(asyncHandler(async (req, res, next) => requireAuth(req, res, next)));
 
-adminRouter.get("/auth/me", (req, res) => {
-  res.json({ ok: true, user: req.user });
+/** Drivers use the driver app (/v1/driver/*); the office admin API is closed to them except their own session info. */
+adminRouter.use((req, _res, next) => {
+  if (req.user?.role === "DRIVER" && !req.path.startsWith("/auth/")) return next(new HttpError(403, "Drivers use the Express Bags driver app."));
+  next();
 });
+
+adminRouter.get(
+  "/auth/me",
+  asyncHandler(async (req, res) => {
+    const u = await prisma.user.findUnique({ where: { id: req.user!.id }, select: { totpEnabled: true, mustChangePassword: true, lastLoginAt: true } });
+    res.json({ ok: true, user: { ...req.user, ...u } });
+  }),
+);
 
 /* -------------------------------- Dashboard ------------------------------- */
 
