@@ -5,6 +5,7 @@ import { FollowABag } from "@/components/home/follow-a-bag";
 import { RoutePlanner } from "@/components/home/route-planner";
 import { Credibility, MarketsGrid } from "@/components/home/credibility";
 import { CtaBand } from "@/components/ui/cta-band";
+import { SocialFeeds } from "@/components/home/social-feeds";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function HomePage() {
       <Credibility />
       <AudienceSplit />
       <FaqTeaser />
+      <SocialFeeds />
       <CtaBand title="Planning a hotel, cruise or group movement?" />
     </>
   );

@@ -41,7 +41,8 @@ const csp = [
   `media-src 'self' blob: ${apiOrigin}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "frame-src 'self'",
+  // Facebook Page plugin + Instagram post embeds (loaded only after the visitor clicks "Show posts")
+  "frame-src 'self' https://www.facebook.com https://www.instagram.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

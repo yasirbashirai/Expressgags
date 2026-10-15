@@ -67,6 +67,19 @@ export const social = [
   { name: "Nextdoor", href: "https://nextdoor.com/", note: "confirm exact URL with Carlos" },
 ] as const;
 
+/**
+ * Social feeds shown on the home page ("From our social pages").
+ * - facebookPageUrl: the PERMANENT Facebook Page URL (e.g. https://www.facebook.com/ExpressBagsInc). Empty → Facebook panel hidden.
+ * - instagramPostUrls: links to specific Instagram posts to feature (newest first, up to 6), e.g. https://www.instagram.com/p/ABC123/.
+ *   Empty → a branded "Follow us on Instagram" card is shown instead.
+ * Embeds load only after the visitor clicks "Show posts" (third-party cookies; keeps the page fast).
+ */
+export const socialFeeds = {
+  facebookPageUrl: "",
+  instagramHandle: "express_bags_inc",
+  instagramPostUrls: [] as string[],
+};
+
 export const brand = {
   navy: "#002858",
   orange: "#E06010",
