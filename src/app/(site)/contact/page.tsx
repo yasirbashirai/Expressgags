@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CalendarCheck } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
+import { CourierArt } from "@/components/ui/illustrations";
 import { Section } from "@/components/ui/section";
 import { ContactForm } from "@/components/company/forms";
 import { ContactCard } from "@/components/company/blocks";
@@ -18,6 +19,7 @@ export default function ContactPage() {
   return (
     <>
       <PageHero
+        art={<CourierArt className="mx-auto h-64 w-auto" />}
         eyebrow="Contact"
         title="Talk to our Miami office."
         lead="For pricing, the quote form gathers everything dispatch needs and gets you the fastest accurate answer. For anything else, call or send a message."
@@ -35,10 +37,10 @@ export default function ContactPage() {
                 <p className="mt-1 text-sm text-slate-ink">We do not offer walk-in service. If a visit is needed, location details are shared privately once an appointment is confirmed.</p>
               </div>
             </div>
-            <Link href="/request-a-quote" className="group flex items-center justify-between rounded-[var(--radius-card)] bg-orange p-6 text-white">
+            <Link href="/request-a-quote" className="group flex items-center justify-between rounded-[var(--radius-card)] bg-orange-600 p-6 text-white">
               <span>
                 <span className="block font-display text-xl font-bold">Request a Quote</span>
-                <span className="text-sm text-white/85">Route, date, items and timing in one form</span>
+                <span className="text-sm text-white">Route, date, items and timing in one form</span>
               </span>
               <ArrowRight className="h-6 w-6 transition group-hover:translate-x-1" aria-hidden />
             </Link>

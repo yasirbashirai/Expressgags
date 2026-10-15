@@ -5,6 +5,9 @@
  * private fact or banned claim appears publicly. Rules come from Carlos's completed form (A2–A16, B13).
  *
  * Usage: node scripts/check-content.mjs [htmlDir]
+ * Naming permissions: scripts/notable-permissions.mjs is generated from the database (NotableProjectPermission,
+ * Admin → Website content → History & names) by scripts/export-notable-permissions.mjs (`npm run check:content`
+ * runs both). Offline, the last exported list is used, so the guardrail never becomes more permissive.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -27,7 +30,8 @@ const RULES = [
   { id: "moving-service", re: /\b(moving\s+(services?|company|companies)|local\s+movers?|we\s+(also\s+)?move\s+homes|apartment\s+moves?)\b/i, why: "No moving services (form B13)" },
   { id: "food-delivery", re: /\b(food|catering)\s+delivery\b(?![^<]{0,40}(not|no)\b)/i, why: "No food/catering delivery — only allowed in an exclusion sentence", allowIf: /no\s+food\s+or\s+catering|not\s+(market|offer|accept)[^<]{0,60}(food|catering)|food\s+or\s+catering\s+delivery\s*<?/i },
   { id: "insurance-product", re: /luggage\s+insurance|buy\s+insurance/i, why: "Protection must not be sold as insurance (legal approval pending)" },
-  { id: "lorem", re: /lorem ipsum|TODO|FIXME|\[placeholder\]/i, why: "Unfinished content" },
+  // Case-sensitive TODO/FIXME (the Spanish word "todo" is legitimate copy on /es pages)
+  { id: "lorem", re: /[Ll]orem [Ii]psum|\bTODO\b|\bFIXME\b|\[placeholder\]/, why: "Unfinished content" },
 ];
 
 /** Named end-clients that need written permission before publication (form B13 / history doc). */

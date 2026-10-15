@@ -1,0 +1,9 @@
+// CMS display metadata (owned by the cms module).
+
+/// Safe public wording for a HistoryEntry shown while its visibility is GENERIC (no names).
+/// Kept separate so the core HistoryEntry content model stays exactly as the History brief §10 defines it.
+model HistoryEntryDisplay {
+  entryId      String   @id
+  genericTitle String
+  updatedAt    DateTime @updatedAt
+}

@@ -1,0 +1,64 @@
+// Storage operations + optional protection claims (Master Requirements §7, §8).
+// Side tables keyed by scalar IDs so the core StorageBooking / Claim models stay unchanged.
+
+/// Extra booking data: which of the 5 storage combinations, standalone customer contact,
+/// internal pricing breakdown, intake/release records, extensions and overstay.
+model StorageBookingMeta {
+  bookingId      String   @id /// StorageBooking.id
+  /// storage-only | pickup-storage | storage-delivery | pickup-storage-delivery | storage-shipping
+  combination    String
+  customerId     String?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  notes          String?
+  /// Internal engine output (cost, margin) — admin only, never public
+  pricing        Json?
+  /// Piece tags recorded at intake (order piece IDs, or tag codes for standalone bookings)
+  pieceTags      String[]
+  /// Per-piece bay map at intake { "EB-…-01": "B-04" }
+  bays           Json?
+  intakeCount    Int?
+  intakeNotes    String?
+  intakeUploadIds String[]
+  checkedInBy    String?
+  releasedTo     String?
+  releaseCount   Int?
+  releaseUploadIds String[]
+  releasedBy     String?
+  /// [{ at, previousEnd, newEnd, extraCents, by }]
+  extensions     Json?
+  overstayCents  Int      @default(0)
+  cancelReason   String?
+  updatedAt      DateTime @updatedAt
+}
+
+/// Evidence attached to a protection claim, by category.
+model ClaimEvidence {
+  id        String   @id @default(cuid())
+  claimId   String
+  uploadId  String
+  /// damage-photo | proof-of-value | pre-trip-photo | other
+  category  String
+  createdAt DateTime @default(now())
+
+  @@index([claimId])
+}
+
+/// Claim timeline: submissions, info requests, customer replies, decisions, payout.
+model ClaimEvent {
+  id        String   @id @default(cuid())
+  claimId   String
+  /// SUBMITTED | STATUS | INFO_REQUESTED | CUSTOMER_REPLY | DECISION | PAID | NOTE
+  type      String
+  note      String?
+  /// staff | customer | system
+  actorType String
+  actorId   String?
+  actorName String?
+  /// Customer can see this event (internal staff notes stay false)
+  customerVisible Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([claimId, createdAt])
+}

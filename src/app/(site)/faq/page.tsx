@@ -5,6 +5,11 @@ import { CtaBand } from "@/components/ui/cta-band";
 import { JsonLd } from "@/components/ui/json-ld";
 import { exclusions, faqs } from "@/content/site";
 import { faqSchema, pageMeta } from "@/lib/seo";
+import { FaqExplorer } from "@/components/services/faq-explorer";
+
+/** Topic for each FAQ (same order as faqs in site.ts). */
+const CATEGORY = ["Coverage & timing", "Pricing", "Coverage & timing", "Airports & ports", "Groups & special items", "Storage", "Proof & privacy", "Proof & privacy", "Groups & special items", "Changes & claims", "Changes & claims"];
+const CATEGORIES = [...new Set(CATEGORY)];
 
 export const metadata: Metadata = pageMeta({
   title: "FAQ | Luggage Delivery, Storage, Courier & Box-Truck Questions",
@@ -23,16 +28,8 @@ export default function FaqPage() {
       />
       <Section>
         <div className="grid gap-12 lg:grid-cols-12">
-          <div className="space-y-3 lg:col-span-8">
-            {faqs.map((f, i) => (
-              <details key={f.q} className="group card p-0 [&_summary::-webkit-details-marker]:hidden" open={i === 0}>
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-6 p-6">
-                  <h2 className="text-lg font-semibold">{f.q}</h2>
-                  <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy-50 text-navy transition group-open:rotate-45">+</span>
-                </summary>
-                <p className="px-6 pb-6 leading-relaxed text-slate-ink">{f.a}</p>
-              </details>
-            ))}
+          <div className="lg:col-span-8">
+            <FaqExplorer items={faqs.map((f, i) => ({ ...f, category: CATEGORY[i] ?? "General" }))} categories={CATEGORIES} />
           </div>
           <aside className="lg:col-span-4">
             <div className="rounded-[var(--radius-card)] bg-sand p-7 lg:sticky lg:top-32">

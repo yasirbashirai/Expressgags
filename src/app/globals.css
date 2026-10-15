@@ -79,7 +79,7 @@
   @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-60;
 }
 @utility btn-primary {
-  @apply btn bg-orange text-white shadow-[0_8px_20px_-8px_rgb(224_96_16/0.7)] hover:bg-orange-600;
+  @apply btn bg-orange-600 text-white shadow-[0_8px_20px_-8px_rgb(224_96_16/0.7)] hover:bg-orange-700;
 }
 @utility btn-navy {
   @apply btn bg-navy text-white hover:bg-navy-700;
@@ -108,4 +108,76 @@
   background-size: 14px 2px;
   background-repeat: repeat-x;
   height: 2px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Motion primitives (CSS-only, GPU-friendly, reduced-motion safe)   */
+/* ---------------------------------------------------------------- */
+@keyframes eb-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes eb-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes eb-pulse {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes eb-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes eb-dash-run {
+  to { stroke-dashoffset: -40; }
+}
+@keyframes eb-fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@utility anim-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: eb-draw 1.4s cubic-bezier(.65,0,.35,1) forwards;
+}
+@utility anim-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eb-pop 0.6s cubic-bezier(.2,.8,.2,1) both;
+}
+@utility anim-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: eb-pulse 2.4s ease-out infinite;
+}
+@utility anim-float {
+  animation: eb-float 7s ease-in-out infinite;
+}
+@utility anim-dash-run {
+  animation: eb-dash-run 1.6s linear infinite;
+}
+@utility anim-fade-up {
+  animation: eb-fade-up 0.8s cubic-bezier(.2,.7,.2,1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-draw { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+  .anim-pop, .anim-pulse, .anim-float, .anim-dash-run, .anim-fade-up { animation: none; opacity: 1; transform: none; }
+}
+
+/* Glass surfaces used over navy stages */
+@utility glass-navy {
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.04));
+  border: 1px solid rgb(255 255 255 / 0.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  box-shadow: 0 40px 80px -40px rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+/* Subtle grid texture for stages */
+@utility stage-grid {
+  background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+@keyframes eb-marquee {
+  to { transform: translateX(-50%); }
 }

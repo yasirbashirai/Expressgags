@@ -56,7 +56,7 @@ export default function ServiceAreasPage() {
                     <Link href={`/service-areas/${m.slug}`} className="card group flex h-full flex-col p-5 transition hover:-translate-y-0.5">
                       <div className="flex items-center justify-between">
                         <MapPin className="h-5 w-5 text-orange" aria-hidden />
-                        {m.hq && <span className="rounded-full bg-orange px-2.5 py-0.5 text-[11px] font-semibold text-white">HQ</span>}
+                        {m.hq && <span className="rounded-full bg-orange-600 px-2.5 py-0.5 text-[11px] font-semibold text-white">HQ</span>}
                       </div>
                       <h4 className="mt-3 font-display text-lg font-bold text-navy">{m.name}</h4>
                       <p className="mt-1.5 line-clamp-3 flex-1 text-sm text-slate-ink">{m.summary}</p>
@@ -76,7 +76,7 @@ export default function ServiceAreasPage() {
 
       <Section tone="cloud">
         <div className="grid gap-8 rounded-[var(--radius-card)] bg-white p-6 shadow-[var(--shadow-card)] md:grid-cols-[auto_1fr] md:p-10">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-orange text-white"><Route className="h-7 w-7" aria-hidden /></span>
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-orange-600 text-white"><Route className="h-7 w-7" aria-hidden /></span>
           <div>
             <h2 className="text-2xl font-bold">{otherFloridaRoute.label}</h2>
             <p className="mt-3 max-w-3xl text-slate-ink">{otherFloridaRoute.note} Requests outside the eight focus markets are reviewed individually and are never a promise of immediate local availability.</p>

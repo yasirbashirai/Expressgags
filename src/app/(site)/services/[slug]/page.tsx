@@ -96,7 +96,7 @@ export default async function ServicePage({ params }: Props) {
             <div aria-hidden className="absolute left-0 right-0 top-6 hidden h-0.5 bg-orange/40 md:block" />
             {c.steps.map((st, i) => (
               <li key={st.title} className="relative">
-                <span className="relative grid h-12 w-12 place-items-center rounded-full bg-orange font-display text-lg font-bold text-white ring-8 ring-cloud">{i + 1}</span>
+                <span className="relative grid h-12 w-12 place-items-center rounded-full bg-orange-600 font-display text-lg font-bold text-white ring-8 ring-cloud">{i + 1}</span>
                 <h3 className="mt-4 text-lg font-bold">{st.title}</h3>
                 <p className="mt-1.5 text-slate-ink">{st.text}</p>
               </li>

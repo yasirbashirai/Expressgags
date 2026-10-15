@@ -22,11 +22,14 @@ export async function generateMetadata({ params }: Props) {
   const m = markets.find((x) => x.slug === slug);
   if (!m) return {};
   const c = marketCopy[m.slug];
-  return pageMeta({
-    title: `${m.name} Luggage Delivery, Courier & Logistics`,
-    description: `${c.intro}`.slice(0, 158),
-    path: `/service-areas/${m.slug}`,
-  });
+  return {
+    ...pageMeta({
+      title: `${m.name} Luggage Delivery, Courier & Logistics`,
+      description: `${c.intro}`.slice(0, 158),
+      path: `/service-areas/${m.slug}`,
+    }),
+    alternates: { canonical: `/service-areas/${m.slug}`, languages: { "en-US": `/service-areas/${m.slug}`, "es-US": `/es/areas/${m.slug}` } },
+  };
 }
 
 const TIER_LABEL = { top: "Top-priority market", next: "Next-priority market", additional: "Additional focus market" } as const;
@@ -129,7 +132,7 @@ export default async function MarketPage({ params }: Props) {
             <p className="font-display text-lg font-bold text-navy">¿Habla español?</p>
             <p className="mt-1 max-w-3xl text-slate-ink">{c.spanishLine}</p>
           </div>
-          <Link href={`/request-a-quote?market=${m.slug}`} className="btn-ghost shrink-0">Solicitar cotización</Link>
+          <div className="flex shrink-0 flex-wrap gap-2"><Link href={`/es/areas/${m.slug}`} hrefLang="es" className="btn-ghost">Ver en español</Link><Link href={`/request-a-quote?market=${m.slug}&lang=es`} className="btn-primary">Solicitar cotización</Link></div>
         </div>
       </section>
 

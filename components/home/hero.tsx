@@ -1,31 +1,48 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Phone, Plane } from "lucide-react";
-import { company, contact } from "@/content/site";
+import { ArrowRight, Phone, ShieldCheck } from "lucide-react";
+import { airports, company, contact, markets, ports } from "@/content/site";
+import { FLORIDA_PATH, FLORIDA_VIEWBOX, KEYS_CHAIN, MARKET_COORDS, project } from "@/components/ui/florida-geo";
+import { HeroTicket } from "./hero-ticket";
 
 /**
- * Home hero: navy stage with the logo's orbit motif, the tagline, primary CTA and an
- * illustrative "job ticket" card that shows how an Express Bags handoff is documented.
+ * Home hero: a cinematic navy stage. Routes draw out of the Miami headquarters to every priority
+ * market (pure CSS stroke animation, no JS), while an illustrative job ticket floats over the map.
+ * The H1 and lead text render immediately (LCP), animation is decorative and reduced-motion safe.
  */
+const LABELS: Record<string, { text: string; dx: number; dy: number; anchor: "start" | "end" }> = {
+  miami: { text: "Miami HQ", dx: 18, dy: 18, anchor: "start" },
+  "fort-lauderdale-broward": { text: "Fort Lauderdale", dx: 14, dy: 4, anchor: "start" },
+  "west-palm-beach": { text: "West Palm Beach", dx: 14, dy: 4, anchor: "start" },
+  "cape-canaveral-port-canaveral": { text: "Port Canaveral", dx: 14, dy: 4, anchor: "start" },
+  orlando: { text: "Orlando", dx: -14, dy: -4, anchor: "end" },
+  tampa: { text: "Tampa", dx: 14, dy: 5, anchor: "start" },
+  "fort-myers": { text: "Fort Myers", dx: 14, dy: 5, anchor: "start" },
+  "florida-keys-key-west": { text: "Key West", dx: -14, dy: 6, anchor: "end" },
+};
+
 export function HomeHero() {
+  const hub = project(MARKET_COORDS.miami);
+  const routes = markets.filter((m) => m.slug !== "miami");
   return (
-    <section className="relative isolate overflow-hidden bg-navy text-white">
-      {/* Orbit motif */}
+    <section className="relative isolate overflow-hidden bg-navy-950 text-white">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -right-[18rem] -top-[10rem] h-[46rem] w-[46rem] rotate-[-28deg] rounded-[50%] border-[3px] border-orange/60 [transform:rotate(-28deg)_scaleY(0.55)]" />
-        <div className="absolute -right-[14rem] -top-[6rem] h-[40rem] w-[40rem] rounded-[50%] border-[22px] border-white/[0.05] [transform:rotate(32deg)_scaleY(0.5)]" />
-        <div className="absolute bottom-0 left-0 h-64 w-full bg-gradient-to-t from-navy-950/80 to-transparent" />
+        <div className="stage-grid absolute inset-0 opacity-60 [mask-image:radial-gradient(ellipse_at_70%_40%,black,transparent_70%)]" />
+        <div className="absolute -left-40 top-1/3 h-[38rem] w-[38rem] rounded-full bg-navy-700/40 blur-3xl" />
+        <div className="absolute right-[-12rem] top-[-14rem] h-[40rem] w-[40rem] rounded-full bg-orange/15 blur-3xl" />
       </div>
 
-      <div className="container-eb grid items-center gap-12 pb-20 pt-14 md:pb-28 md:pt-20 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <p className="eyebrow !text-orange-100">Miami headquartered · Florida logistics since {company.founded}</p>
-          <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.02] text-white sm:text-6xl lg:text-7xl">
+      <div className="container-eb grid items-center gap-10 pb-16 pt-12 md:pb-24 md:pt-16 lg:grid-cols-12 lg:gap-6">
+        <div className="lg:col-span-6 xl:col-span-6">
+          <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-orange-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-orange" /> Miami headquartered · since {company.founded}
+          </p>
+          <h1 className="mt-6 text-[2.75rem] font-extrabold leading-[0.98] tracking-tight text-white sm:text-6xl xl:text-[5.25rem]">
             Handled with Care.
-            <span className="block text-orange">Delivered with Confidence.</span>
+            <span className="mt-1 block bg-gradient-to-r from-orange to-[#ff9a4d] bg-clip-text text-transparent">Delivered with Confidence.</span>
           </h1>
           <p className="mt-7 max-w-xl text-lg leading-relaxed text-white/80">
-            Luggage logistics, hospitality transfers, professional courier, last-mile delivery, luggage storage and box-truck
-            logistics, connecting Miami with Florida&apos;s key travel markets. {company.promise}
+            Florida luggage logistics, hospitality transfers, courier, last-mile and box-truck logistics, connecting Miami with
+            the state&apos;s key travel markets. {company.promise}
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link href="/request-a-quote" className="btn-primary !px-7 !py-3.5 text-base">
@@ -35,47 +52,77 @@ export function HomeHero() {
               <Phone className="h-4 w-4" aria-hidden /> {contact.phoneDisplay}
             </a>
           </div>
-          <p className="mt-5 text-sm text-white/60">
-            Every route, time window and vehicle is confirmed by dispatch before we commit.
+          <p className="mt-6 flex items-center gap-2 text-sm text-white/65">
+            <ShieldCheck className="h-4 w-4 text-orange" aria-hidden /> Every route, window and vehicle confirmed by dispatch before we commit.
           </p>
+          <dl className="mt-10 grid max-w-lg grid-cols-3 gap-3 border-t border-white/10 pt-6">
+            {[
+              [String(markets.length), "Florida markets"],
+              [String(airports.length), "Airports"],
+              [String(ports.length), "Cruise ports"],
+            ].map(([n, l]) => (
+              <div key={l} className="flex flex-col-reverse">
+                <dt className="text-xs uppercase tracking-[0.14em] text-white/55">{l}</dt>
+                <dd className="font-display text-3xl font-extrabold text-white">{n}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        {/* Illustrative job ticket */}
-        <div className="relative lg:col-span-5">
-          <div aria-hidden className="absolute -inset-6 -z-10 rounded-[2.5rem] bg-gradient-to-br from-orange/25 via-transparent to-white/5 blur-2xl" />
-          <div className="rounded-[1.75rem] border border-white/15 bg-white/[0.07] p-6 shadow-[0_40px_80px_-40px_rgb(0_0_0/0.8)] backdrop-blur-md md:p-7">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-100">Example job ticket</p>
-              <span className="rounded-full bg-orange/90 px-3 py-1 text-[11px] font-semibold">Group transfer</span>
+        {/* Map stage */}
+        <div className="relative lg:col-span-6 xl:col-span-6">
+          <div className="relative mx-auto w-full max-w-[600px]">
+            <div className="relative aspect-[805/690] w-full">
+            <svg
+              viewBox={`-110 -30 ${FLORIDA_VIEWBOX.width + 250} ${FLORIDA_VIEWBOX.height + 60}`}
+              className="absolute inset-0 h-full w-full"
+              role="img"
+              aria-label="Map of Florida showing routes from the Miami headquarters to eight priority markets"
+            >
+              <defs>
+                <linearGradient id="hero-fl" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1d4f8c" />
+                  <stop offset="100%" stopColor="#0a3a73" />
+                </linearGradient>
+                <radialGradient id="hero-glow">
+                  <stop offset="0%" stopColor="#E06010" stopOpacity="0.55" />
+                  <stop offset="100%" stopColor="#E06010" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <path d={FLORIDA_PATH} fill="url(#hero-fl)" stroke="rgb(255 255 255 / 0.45)" strokeWidth="1.5" strokeLinejoin="round" />
+              {KEYS_CHAIN.map((c) => {
+                const k = project(c);
+                return <ellipse key={c[0]} cx={k.x} cy={k.y} rx="6" ry="2.6" fill="#0a3a73" stroke="rgb(255 255 255 / 0.3)" />;
+              })}
+              <circle cx={hub.x} cy={hub.y} r="90" fill="url(#hero-glow)" />
+              {routes.map((m, i) => {
+                const n = project(MARKET_COORDS[m.slug]);
+                const bend = m.slug === "florida-keys-key-west" ? 40 : -50;
+                const d = `M${hub.x} ${hub.y} Q ${(hub.x + n.x) / 2 + bend} ${(hub.y + n.y) / 2 - 30} ${n.x} ${n.y}`;
+                return (
+                  <g key={m.slug}>
+                    <path d={d} pathLength={1} fill="none" stroke="#E06010" strokeWidth="2.4" strokeLinecap="round" className="anim-draw" style={{ animationDelay: `${400 + i * 180}ms` }} />
+                    <path d={d} fill="none" stroke="rgb(255 255 255 / 0.5)" strokeWidth="1.2" strokeDasharray="2 18" className="anim-dash-run" />
+                  </g>
+                );
+              })}
+              {markets.map((m, i) => {
+                const n = project(MARKET_COORDS[m.slug]);
+                const l = LABELS[m.slug];
+                const hq = m.slug === "miami";
+                return (
+                  <g key={m.slug} className="anim-pop" style={{ animationDelay: `${hq ? 200 : 900 + i * 180}ms` }}>
+                    {hq && <circle cx={n.x} cy={n.y} r="10" fill="none" stroke="#E06010" strokeWidth="2" className="anim-pulse" />}
+                    <circle cx={n.x} cy={n.y} r={hq ? 9 : 6} fill={hq ? "#E06010" : "#fff"} stroke="#E06010" strokeWidth={hq ? 0 : 3} />
+                    <text x={n.x + l.dx} y={n.y + l.dy} textAnchor={l.anchor} className="fill-white font-sans text-[15px] font-semibold" style={{ paintOrder: "stroke" }} stroke="#00142d" strokeWidth="4">
+                      {l.text}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
             </div>
-            <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <div>
-                <p className="text-xs text-white/60">Pickup</p>
-                <p className="font-display text-lg font-bold leading-tight">Hotel, Miami Beach</p>
-              </div>
-              <div className="flex items-center gap-1 text-orange" aria-hidden>
-                <span className="h-px w-6 border-t-2 border-dashed border-orange" />
-                <Plane className="h-4 w-4 rotate-45" />
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-white/60">Delivery</p>
-                <p className="font-display text-lg font-bold leading-tight">PortMiami terminal</p>
-              </div>
-            </div>
-            <dl className="mt-6 grid grid-cols-3 gap-3 rounded-2xl bg-navy-950/40 p-4 text-center">
-              <div><dt className="text-[11px] uppercase tracking-wide text-white/55">Pieces</dt><dd className="font-display text-2xl font-bold">48</dd></div>
-              <div><dt className="text-[11px] uppercase tracking-wide text-white/55">Vehicle</dt><dd className="font-display text-2xl font-bold">20 ft</dd></div>
-              <div><dt className="text-[11px] uppercase tracking-wide text-white/55">Window</dt><dd className="font-display text-2xl font-bold">10:30</dd></div>
-            </dl>
-            <ol className="mt-6 space-y-3 text-sm">
-              {["Manifest and bag count confirmed", "Loaded and secured, condition noted", "Re-counted at handoff, released to authorized contact", "Proof of delivery recorded and confirmed"].map((s) => (
-                <li key={s} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-orange" aria-hidden />
-                  <span className="text-white/85">{s}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-5 text-[11px] text-white/45">Illustration of our handoff process. Details vary by job.</p>
+            <HeroTicket />
           </div>
         </div>
       </div>

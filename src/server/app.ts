@@ -24,7 +24,9 @@ export function createApp() {
   const app = express();
   app.set("trust proxy", 1);
   app.disable("x-powered-by");
-  app.use(helmet());
+  // CORP same-site: the website (www.express-bags.com) may embed private, cookie-authorized media
+  // served by the API (api.express-bags.com — deploy the API on a subdomain of the same site).
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "same-site" } }));
   app.use(
     cors({
       origin: (origin, cb) => cb(null, originAllowed(origin)),

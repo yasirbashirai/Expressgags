@@ -493,6 +493,10 @@ adminRouter.put(
     const id = String(req.params.id);
     if (!notableProjects.some((p) => p.id === id)) throw new HttpError(404, "Unknown project.");
     const { permissionGranted, evidenceNote } = z.object({ permissionGranted: z.boolean(), evidenceNote: z.string().max(500).optional() }).parse(req.body);
+    // Naming a client publicly requires a recorded written-permission note (form B13); same rule as Website content → History & names
+    if (permissionGranted && (!evidenceNote || evidenceNote.trim().length < 10)) {
+      throw new HttpError(400, "Record how written permission was given (at least 10 characters) before naming this client publicly.");
+    }
     const row = await prisma.notableProjectPermission.upsert({
       where: { projectId: id },
       update: { permissionGranted, evidenceNote, grantedAt: permissionGranted ? new Date() : null, updatedBy: req.user!.email },

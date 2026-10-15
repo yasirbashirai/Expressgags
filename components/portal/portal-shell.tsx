@@ -8,9 +8,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { Building2, ConciergeBell, FileText, FolderOpen, LayoutDashboard, LogOut, MapPin, Package, Plus, Receipt, UserRound } from "lucide-react";
+import { Building2, ConciergeBell, ShieldCheck, FileText, FolderOpen, LayoutDashboard, LogOut, MapPin, Package, Plus, Receipt, UserRound } from "lucide-react";
 import { canUseConcierge, portal, PortalError, type Me } from "./api";
 import { Alert, Loading } from "./ui";
+import { useProtectionLive } from "@/components/protection/portal-claims";
 
 type Ctx = { me: Me; refresh: () => Promise<void> };
 const MeContext = createContext<Ctx | null>(null);
@@ -25,6 +26,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const protectionLive = useProtectionLive();
 
   const load = useCallback(async () => {
     try {
@@ -65,6 +67,7 @@ export function PortalShell({ children }: { children: ReactNode }) {
     { href: "/account/orders", label: "Orders & tracking", Icon: Package },
     { href: "/account/quotes", label: "Quotes", Icon: FileText },
     { href: "/account/invoices", label: "Invoices & receipts", Icon: Receipt },
+    ...(protectionLive ? [{ href: "/account/claims", label: "Protection claims", Icon: ShieldCheck }] : []),
     ...(canUseConcierge(me) ? [{ href: "/account/concierge", label: "Concierge desk", Icon: ConciergeBell }] : []),
     { href: "/account/addresses", label: "Saved locations", Icon: MapPin },
     { href: "/account/documents", label: "Documents", Icon: FolderOpen },

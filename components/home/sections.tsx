@@ -106,8 +106,8 @@ export function ServicesShowcase() {
               );
             })}
             <li>
-              <Link href="/request-a-quote" className="group flex h-full flex-col justify-between rounded-[1.25rem] bg-orange p-6 text-white transition hover:-translate-y-0.5 hover:bg-orange-600">
-                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/80">Not sure which fits?</span>
+              <Link href="/request-a-quote" className="group flex h-full flex-col justify-between rounded-[1.25rem] bg-orange-600 p-6 text-white transition hover:-translate-y-0.5 hover:bg-orange-600">
+                <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white">Not sure which fits?</span>
                 <span className="mt-5 block font-display text-lg font-bold">Describe the job and our dispatch team will match the service.</span>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">
                   Request a Quote <ArrowUpRight className="h-4 w-4 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />

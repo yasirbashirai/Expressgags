@@ -59,10 +59,29 @@ export interface MapsProvider {
 
 // ---------------- AI (provider-agnostic; Claude default) ----------------
 export type AiMessage = { role: "user" | "assistant"; content: string };
+/** Provider-neutral tool definition (JSON Schema input). */
+export type AiToolSpec = { name: string; description: string; inputSchema: Record<string, unknown> };
+export type AiAgentRequest = {
+  /** Static system prompt (providers should cache it) */
+  system: string;
+  history: AiMessage[];
+  tools: AiToolSpec[];
+  /** Executes a tool call; returns the text result shown to the model (throw → error result) */
+  executeTool: (name: string, input: unknown) => Promise<string>;
+  /** Streams visible answer text as it is generated */
+  onText?: (delta: string) => void;
+  maxTokens?: number;
+  maxRounds?: number;
+  model?: string;
+  signal?: AbortSignal;
+};
+export type AiAgentResult = { text: string; toolsUsed: string[]; stopReason: string; model: string; usage?: { input: number; output: number; cacheRead?: number } };
 export interface AiProvider {
   name: "anthropic" | "openai" | "scripted";
   model: string;
-  chat(system: string, messages: AiMessage[], opts?: { maxTokens?: number }): Promise<{ text: string; usage?: { input: number; output: number } }>;
+  chat(system: string, messages: AiMessage[], opts?: { maxTokens?: number; model?: string; jsonSchema?: Record<string, unknown> }): Promise<{ text: string; usage?: { input: number; output: number } }>;
+  /** Optional multi-turn tool-using loop (each provider owns its own loop and wire format). */
+  runAgent?(req: AiAgentRequest): Promise<AiAgentResult>;
 }
 
 // ---------------- Accounting (QuickBooks Online) ----------------

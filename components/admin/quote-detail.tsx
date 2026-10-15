@@ -6,6 +6,7 @@ import { ArrowLeft, Calculator, Clock, Mail, MapPin, Package, Phone, User } from
 import { LUGGAGE_CATEGORY_LABELS, type QuoteRequest } from "@/lib/quote-schema";
 import { api, API_URL, dateTime, money } from "./api";
 import { AdminTitle, Panel, useAdminUser } from "./admin-shell";
+import { LeadSummaryCard } from "@/components/assistant/lead-summary-card";
 import { Badge, marketLabel, ROUTE_LABEL, ROUTE_STYLE, serviceLabel, STATUS_STYLE } from "./labels";
 import { ConvertQuoteButton } from "@/components/ops/convert-quote-button";
 
@@ -123,6 +124,7 @@ export function QuoteDetail({ id }: { id: string }) {
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="space-y-6 xl:col-span-2">
+          <LeadSummaryCard quoteId={q.id} />
           <Panel title="Route decision">
             <ul className="list-disc space-y-1 pl-5 text-sm text-slate-ink">
               {q.routeReasons.map((r) => <li key={r}>{r}</li>)}

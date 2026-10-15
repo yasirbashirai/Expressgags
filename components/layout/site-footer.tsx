@@ -36,10 +36,11 @@ export function SiteFooter() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="container-eb flex flex-col gap-4 py-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
+        <div className="container-eb flex flex-col gap-4 pb-28 pt-6 text-xs text-white/60 md:flex-row md:items-center md:justify-between lg:pb-6">
           <p>© {year} {company.name} All rights reserved.</p>
           <ul className="flex flex-wrap gap-x-5 gap-y-2">
             {nav.footer.legal.map((l) => (<li key={l.href}><Link href={l.href} className="hover:text-white">{l.label}</Link></li>))}
+            <li><a href="#cookie-settings" className="hover:text-white">Cookie settings</a></li>
             {social.map((s) => (<li key={s.name}><a href={s.href} target="_blank" rel="noopener noreferrer" className="hover:text-white">{s.name}</a></li>))}
           </ul>
         </div>

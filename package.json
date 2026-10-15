@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "check:content": "node scripts/check-content.mjs",
+    "check:content": "node scripts/export-notable-permissions.mjs && node scripts/check-content.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "api:dev": "tsx watch src/server/index.ts",

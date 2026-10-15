@@ -22,6 +22,8 @@ export function PaymentResult() {
       try {
         const r = await publicApi<{ status: string; amountCents: number; kind: string }>(`/pay/status/${encodeURIComponent(session)}`);
         setState(r);
+        // Conversion hook for consented analytics/ads (components/marketing/consent-and-tags.tsx)
+        if (r.status === "SUCCEEDED") window.dispatchEvent(new CustomEvent("eb:booking-completed", { detail: { reference: session, valueCents: r.amountCents } }));
         if (r.status === "PENDING" && tries++ < 10 && !stop) setTimeout(poll, 1500);
       } catch {
         setState({ status: "RECEIVED" });

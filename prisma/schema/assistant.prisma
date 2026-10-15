@@ -1,0 +1,15 @@
+// AI assistant: quote drafts created in chat (opened in the quote wizard via /request-a-quote?draft=<id>).
+
+model AiQuoteDraft {
+  id             String   @id @default(cuid())
+  /// Unguessable public id used in the link
+  token          String   @unique
+  conversationId String?
+  /// Partial QuoteRequest-shaped draft (validated by the wizard, never trusted)
+  data           Json
+  expiresAt      DateTime
+  openedAt       DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([expiresAt])
+}

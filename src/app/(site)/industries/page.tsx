@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
+import { HotelArt } from "@/components/ui/illustrations";
 import { Section } from "@/components/ui/section";
 import { CtaBand } from "@/components/ui/cta-band";
 import { industries, services } from "@/content/site";
@@ -33,6 +34,7 @@ export default function IndustriesPage() {
   return (
     <>
       <PageHero
+        art={<HotelArt className="mx-auto h-64 w-auto" />}
         eyebrow="Industries we serve"
         title="The logistics partner behind hospitality, travel and events."
         lead="Our strongest base is tourism and hospitality. Our fastest-growing work is recurring business accounts that need careful handoffs, schedule discipline and proof of completion."

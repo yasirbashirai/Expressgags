@@ -57,7 +57,7 @@ export function FloridaMap({ highlight }: { highlight?: string }) {
   const tierColor = { top: "#E06010", next: "#F59A5B", additional: "#5B8FD1" } as const;
   return (
     <figure className="relative">
-      <svg viewBox="-10 -10 640 480" className="h-auto w-full" role="img" aria-labelledby="fl-map-title">
+      <svg viewBox="-10 -10 640 480" className="h-auto w-full" role="group" aria-labelledby="fl-map-title">
         <title id="fl-map-title">Map of Express Bags priority service markets in Florida</title>
         <defs>
           <pattern id="fl-grid" width="22" height="22" patternUnits="userSpaceOnUse">

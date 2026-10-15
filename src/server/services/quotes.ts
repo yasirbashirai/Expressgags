@@ -11,6 +11,7 @@ import { env } from "../lib/env";
 import { quoteReference } from "../lib/reference";
 import { mapQuoteToHubSpot, syncToHubSpot, emailDomain } from "../integrations/hubspot";
 import { getSetting } from "../settings";
+import { emit } from "../lib/events";
 
 const ROUTE_DB = { "custom-quote": "CUSTOM_QUOTE", "standard-quote": "STANDARD_QUOTE", "special-route": "SPECIAL_ROUTE" } as const;
 
@@ -120,6 +121,9 @@ export async function createQuote(input: QuoteRequest, meta: { ip?: string; user
       await prisma.quoteRequest.update({ where: { id: quote.id }, data: { hubspotSyncStatus: "FAILED", hubspotError: (e as Error).message.slice(0, 500) } });
     }
   }
+
+  // Domain event for subscribers (AI lead qualification, notifications…); never blocks the response
+  void emit("quote.created", { quoteId: quote.id, reference });
 
   return { reference, route: decision.route, message: ROUTE_MESSAGES[decision.route] };
 }

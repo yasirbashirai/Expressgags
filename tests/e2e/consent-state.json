@@ -1,0 +1,104 @@
+{
+ "cookies": [],
+ "origins": [
+  {
+   "origin": "http://localhost:3000",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3301",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3302",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3303",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3304",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3305",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3401",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3402",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3403",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3404",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  },
+  {
+   "origin": "http://localhost:3405",
+   "localStorage": [
+    {
+     "name": "eb-consent-v1",
+     "value": "{\"analytics\": false, \"marketing\": false, \"at\": \"2026-10-15T00:00:00.000Z\", \"v\": 1}"
+    }
+   ]
+  }
+ ]
+}

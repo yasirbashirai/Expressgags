@@ -1,6 +1,7 @@
 import { FacilityIndex } from "@/components/areas/facility-page";
 import { CtaBand } from "@/components/ui/cta-band";
 import { PageHero } from "@/components/ui/page-hero";
+import { CruiseShipArt } from "@/components/ui/illustrations";
 import { Section } from "@/components/ui/section";
 import { markets, ports } from "@/content/site";
 import { pageMeta } from "@/lib/seo";
@@ -15,6 +16,7 @@ export default function PortsPage() {
   return (
     <>
       <PageHero
+        art={<CruiseShipArt className="w-full" />}
         eyebrow="Cruise ports"
         title="Cruise-port luggage logistics across Florida"
         lead="Hotel-to-port, airport-to-port and port-to-hotel luggage movements at six Florida cruise ports, planned around ship schedules with manifests, buffer time and one accountable dispatcher."

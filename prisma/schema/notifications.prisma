@@ -1,0 +1,45 @@
+// Engagement module: notification delivery queue (dedupe, quiet hours, retries, delayed surveys)
+// and contact opt-outs (SMS STOP, WhatsApp, marketing email unsubscribe).
+
+/// One row per intended message. `dedupeKey` guarantees the same template is never sent twice
+/// for the same subject (e.g. "order:<id>:order.delivered:sms"). The worker sends due rows.
+model NotificationJob {
+  id            String    @id @default(cuid())
+  dedupeKey     String    @unique
+  /// email | sms | whatsapp
+  channel       String
+  to            String
+  template      String
+  language      String    @default("en")
+  /// Template data snapshot (rendered at send time so retries use the same content)
+  data          Json
+  orderId       String?
+  customerId    String?
+  /// PENDING | SENT | LOGGED | FAILED | SKIPPED | CANCELLED
+  status        String    @default("PENDING")
+  /// Earliest send time (quiet hours, survey delay, retry backoff)
+  scheduledFor  DateTime  @default(now())
+  attempts      Int       @default(0)
+  lastError     String?
+  /// Notification row written when the job was finally processed
+  notificationId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([orderId])
+}
+
+/// Channel-level opt-outs. Address is normalized (E.164 phone or lowercased email).
+model ContactOptOut {
+  id        String   @id @default(cuid())
+  /// sms | whatsapp | email-marketing
+  channel   String
+  address   String
+  /// twilio-stop | unsubscribe-link | admin | customer
+  source    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([channel, address])
+}

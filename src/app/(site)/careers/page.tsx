@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Headset, PackageCheck, Truck } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
+import { EventsArt } from "@/components/ui/illustrations";
 import { Section } from "@/components/ui/section";
 import { CareersForm } from "@/components/company/forms";
 import { careStandard } from "@/content/site";
@@ -22,6 +23,7 @@ export default function CareersPage() {
   return (
     <>
       <PageHero
+        art={<EventsArt className="mx-auto h-64 w-auto" />}
         eyebrow="Careers"
         title="Do careful work for people who notice."
         lead="Our teams move luggage and equipment for hotels, travel programs, sports teams and productions across Florida. We hire people who take pride in punctuality, careful handling and clear communication."

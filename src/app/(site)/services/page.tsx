@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Ban } from "lucide-react";
 import { CtaBand } from "@/components/ui/cta-band";
 import { PageHero } from "@/components/ui/page-hero";
+import { SuitcaseArt } from "@/components/ui/illustrations";
 import { Section } from "@/components/ui/section";
 import { JsonLd } from "@/components/ui/json-ld";
 import { serviceIcon } from "@/components/services/service-icon";
@@ -9,12 +10,15 @@ import { serviceCopy } from "@/content/seo-copy";
 import { exclusions, howItWorks, services } from "@/content/site";
 import { pageMeta, serviceSchema } from "@/lib/seo";
 
-export const metadata = pageMeta({
-  title: "Services: Luggage Logistics, Courier & Box-Truck Logistics in Florida",
-  description:
-    "VIP and group luggage, hotel and DMC logistics, airport and cruise-port luggage, luggage storage, sports and event logistics, courier, last-mile and box-truck logistics across Florida. Request a quote.",
-  path: "/services",
-});
+export const metadata = {
+  ...pageMeta({
+    title: "Services: Luggage Logistics, Courier & Box-Truck Logistics in Florida",
+    description:
+      "VIP and group luggage, hotel and DMC logistics, airport and cruise-port luggage, luggage storage, sports and event logistics, courier, last-mile and box-truck logistics across Florida. Request a quote.",
+    path: "/services",
+  }),
+  alternates: { canonical: "/services", languages: { "en-US": "/services", "es-US": "/es/servicios" } },
+};
 
 const GROUPS = [
   { key: "luggage", title: "Luggage & hospitality logistics", intro: "Travel-industry services built on sixteen years of airport, hotel and cruise-port operations." },
@@ -25,6 +29,7 @@ export default function ServicesPage() {
   return (
     <>
       <PageHero
+        art={<SuitcaseArt className="mx-auto h-64 w-auto" />}
         eyebrow="Services"
         title="Eight services. One accountable logistics partner."
         lead="From a single VIP suitcase to a 26-foot box truck of event equipment, every job is planned, counted and documented by one dispatch team, across Florida's key travel markets."
@@ -39,7 +44,7 @@ export default function ServicesPage() {
               const Icon = serviceIcon(s.icon);
               return (
                 <Link key={s.slug} href={`/services/${s.slug}`} className="card group flex flex-col p-6 transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]">
-                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white transition group-hover:bg-orange"><Icon className="h-6 w-6" aria-hidden /></span>
+                  <span className="grid h-12 w-12 place-items-center rounded-2xl bg-navy text-white transition group-hover:bg-orange-600"><Icon className="h-6 w-6" aria-hidden /></span>
                   <h3 className="mt-5 text-xl font-bold">{s.name}</h3>
                   <p className="mt-2 flex-1 text-slate-ink">{s.short}</p>
                   <ul className="mt-4 flex flex-wrap gap-1.5">

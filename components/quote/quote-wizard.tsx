@@ -26,6 +26,7 @@ import {
 import { fieldId } from "./fields";
 import { ContactStep, GroupStep, ItemsStep, ReviewStep, RouteStep, ServiceStep, StorageStep, TimingStep } from "./sections";
 import { SERVICE_CARDS } from "./options";
+import { InstantPrice, type InstantFlags } from "./instant-price";
 
 const STORAGE_KEY = "eb-quote-draft-v1";
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
@@ -50,6 +51,8 @@ export function QuoteWizard() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [hydrated, setHydrated] = useState(false);
+  // Instant pricing flags (public booleans only). null = quote-only experience.
+  const [instantFlags, setInstantFlags] = useState<InstantFlags | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -98,6 +101,33 @@ export function QuoteWizard() {
       })
       .catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Quote started in the AI assistant chat: ?draft=<token> loads that draft (dates/confirmations still checked by the wizard)
+  useEffect(() => {
+    const token = params.get("draft");
+    if (!token || !/^[A-Za-z0-9]{16,64}$/.test(token)) return;
+    fetch(`${API_URL}/v1/assistant/draft/${token}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        const revived = body?.draft ? reviveDraft(body.draft) : null;
+        if (revived) {
+          setDraft(revived);
+          setStepIndex(revived.serviceType ? 1 : 0);
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Owner-approved instant pricing? (never blocks the wizard; failures keep it quote-only)
+  useEffect(() => {
+    fetch(`${API_URL}/v1/public-config`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((c) => {
+        if (c?.instantBookingEnabled || c?.carrierShippingEnabled) setInstantFlags({ instantBookingEnabled: !!c.instantBookingEnabled, carrierShippingEnabled: !!c.carrierShippingEnabled });
+      })
+      .catch(() => undefined);
   }, []);
 
   // Persist draft
@@ -200,6 +230,8 @@ export function QuoteWizard() {
         /* ignore */
       }
       setStatus({ kind: "done", result: json });
+      // Conversion hook for consented analytics/ads + attribution (components/marketing/consent-and-tags.tsx)
+      window.dispatchEvent(new CustomEvent("eb:quote-submitted", { detail: { reference: json.reference, serviceType: parsed.data.serviceType } }));
     } catch {
       setStatus({ kind: "error", message: "We couldn't send your request just now. Your details are saved on this device." });
     }
@@ -301,7 +333,10 @@ export function QuoteWizard() {
             ) : step.id === "contact" ? (
               <ContactStep draft={draft} update={update} errors={errors} apiUrl={API_URL} />
             ) : (
-              <ReviewStep draft={draft} update={update} errors={errors} steps={steps} goTo={goTo} />
+              <>
+                <ReviewStep draft={draft} update={update} errors={errors} steps={steps} goTo={goTo} />
+                <InstantPrice draft={draft} apiUrl={API_URL} flags={instantFlags} />
+              </>
             )}
           </div>
 

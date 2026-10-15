@@ -38,7 +38,14 @@ publicRouter.get(
   asyncHandler(async (_req, res) => {
     const contact = await getSetting("contact");
     const features = await getSetting("features");
-    res.json({ ok: true, emailLive: contact.emailLive, pricingEnabled: features.pricingEnabled });
+    res.json({
+      ok: true,
+      emailLive: contact.emailLive,
+      pricingEnabled: features.pricingEnabled,
+      // Public booleans only (never prices): the quote wizard shows instant prices when these are on
+      instantBookingEnabled: Boolean(features.pricingEnabled && features.instantBookingEnabled),
+      carrierShippingEnabled: Boolean(features.pricingEnabled && features.instantBookingEnabled && features.carrierShippingEnabled),
+    });
   }),
 );
 

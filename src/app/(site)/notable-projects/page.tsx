@@ -4,6 +4,7 @@ import { PageHero } from "@/components/ui/page-hero";
 import { Section } from "@/components/ui/section";
 import { CtaBand } from "@/components/ui/cta-band";
 import { notableProjects } from "@/content/site";
+import { loadHistory, type PublicHistoryEntry } from "@/components/cms/content-api";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata: Metadata = pageMeta({
@@ -13,7 +14,27 @@ export const metadata: Metadata = pageMeta({
   path: "/notable-projects",
 });
 
-export default function NotableProjectsPage() {
+export const revalidate = 300; // ISR: 5 minutes (also revalidated on publish)
+
+/** Static fallback (API unreachable at build/render): generic wording only, exactly as approved by default. */
+const FALLBACK: PublicHistoryEntry[] = notableProjects.map((p) => ({
+  key: `static-${notableProjects.indexOf(p)}`,
+  year: p.period,
+  title: p.permissionGranted ? p.title : p.genericTitle,
+  type: p.type,
+  summary: p.summary,
+  through: p.through ? (p.permissionGranted ? p.through : "a contracting partner") : null,
+  locations: [],
+  named: p.permissionGranted,
+}));
+
+/**
+ * Story cards from the CMS history content model. Names appear ONLY for entries whose written permission is
+ * recorded (visibility NAMED); everything else shows generic wording ("supported through a contracting partner").
+ */
+export default async function NotableProjectsPage() {
+  const live = await loadHistory();
+  const projects = live ?? FALLBACK;
   return (
     <>
       <PageHero
@@ -31,19 +52,23 @@ export default function NotableProjectsPage() {
             say so. Organization names below are withheld until that permission is recorded.
           </p>
         </div>
+        {projects.length === 0 && <p className="text-slate-ink">Project stories are being prepared for publication.</p>}
         <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {notableProjects.map((p, i) => (
-            <li key={p.id} className={`relative flex flex-col overflow-hidden rounded-[1.5rem] p-7 ${i % 4 === 0 ? "bg-navy text-white" : "card"}`}>
+          {projects.map((p, i) => (
+            <li key={p.key} className={`relative flex flex-col overflow-hidden rounded-[1.5rem] p-7 ${i % 4 === 0 ? "bg-navy text-white" : "card"}`}>
               <div aria-hidden className={`absolute -right-12 -top-12 h-40 w-40 rounded-full border-[12px] ${i % 4 === 0 ? "border-orange/60 !border-[3px]" : "border-orange/10"}`} />
               <div className="flex items-center justify-between gap-3">
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${i % 4 === 0 ? "bg-white/10 text-orange-100" : "bg-orange-50 text-orange-700"}`}>{p.type}</span>
-                <span className={`font-display text-sm font-bold ${i % 4 === 0 ? "text-white/70" : "text-muted"}`}>{p.period}</span>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${i % 4 === 0 ? "bg-white/10 text-orange-100" : "bg-orange-50 text-orange-700"}`}>{p.type ?? "Logistics"}</span>
+                <span className={`font-display text-sm font-bold ${i % 4 === 0 ? "text-white/70" : "text-muted"}`}>{p.year}</span>
               </div>
-              <h2 className={`mt-6 text-xl font-bold ${i % 4 === 0 ? "text-white" : ""}`}>{p.permissionGranted ? p.title : p.genericTitle}</h2>
-              <p className={`mt-3 flex-1 text-sm leading-relaxed ${i % 4 === 0 ? "text-white/75" : "text-slate-ink"}`}>{p.summary.replace(/\s*\([^)]*never stated[^)]*\)/i, "")}</p>
+              <h2 className={`mt-6 text-xl font-bold ${i % 4 === 0 ? "text-white" : ""}`}>{p.title}</h2>
+              <p className={`mt-3 flex-1 text-sm leading-relaxed ${i % 4 === 0 ? "text-white/75" : "text-slate-ink"}`}>{p.summary}</p>
+              {p.named && p.locations.length > 0 && (
+                <p className={`mt-3 text-xs ${i % 4 === 0 ? "text-white/60" : "text-muted"}`}>{p.locations.join(" · ")}</p>
+              )}
               {p.through && (
                 <p className={`mt-5 border-t pt-4 text-xs ${i % 4 === 0 ? "border-white/15 text-white/60" : "border-line text-muted"}`}>
-                  Supported through {p.permissionGranted ? p.through : "a contracting partner"}.
+                  Supported through {p.through}.
                 </p>
               )}
             </li>

@@ -1,0 +1,32 @@
+// Carrier shipping module: pricing sandbox runs and the owner's approval to switch on public instant pricing
+// (Master Requirements §16 "Do not launch automatic public pricing until approved").
+
+/// One run of the "Test pricing" sandbox (20–30 representative scenarios, results kept as evidence).
+model PricingTestRun {
+  id          String   @id @default(cuid())
+  runById     String?
+  runByEmail  String?
+  /// Number of scenarios evaluated in this run
+  scenarioCount Int
+  /// Per-scenario results: decision, engine, retail, cost, profit, margin, notes (internal only)
+  results     Json
+  /// Free-text reviewer notes ("rates look right for Keys trips…")
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Owner approval record for switching public instant pricing / booking / carrier shipping on or off.
+model PricingApproval {
+  id            String   @id @default(cuid())
+  /// ENABLE | DISABLE
+  action        String
+  /// The feature flags written, e.g. { pricingEnabled, instantBookingEnabled, carrierShippingEnabled }
+  flags         Json
+  testRunId     String?
+  approvedById  String?
+  approvedByEmail String?
+  statement     String?
+  createdAt     DateTime @default(now())
+}

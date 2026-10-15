@@ -5,10 +5,17 @@ import { legacyRedirects } from "./src/content/site";
  * NEXT_DIST_DIR lets parallel builds/tests use separate output folders
  * (never run two builds, or a build and `next dev`, on the same .next folder).
  */
+/** CMS media is served by the API (/v1/content/media/:id); allow next/image to optimize it. */
+const apiOrigins = [process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000", process.env.CMS_API_URL].filter(Boolean) as string[];
+const mediaPatterns = apiOrigins.map((o) => {
+  const u = new URL(o);
+  return { protocol: u.protocol.replace(":", "") as "http" | "https", hostname: u.hostname, port: u.port, pathname: "/v1/content/media/**" };
+});
+
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
-  images: { formats: ["image/avif", "image/webp"] },
+  images: { formats: ["image/avif", "image/webp"], remotePatterns: mediaPatterns },
   async redirects() {
     // Old GoDaddy Website Builder URLs → new pages (only where the path actually changes)
     return legacyRedirects
