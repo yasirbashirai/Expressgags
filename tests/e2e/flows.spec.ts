@@ -88,6 +88,6 @@ test("owner signs in and finds the new quote in the admin inbox", async ({ page 
 });
 
 test("public API never exposes prices while pricing is off", async ({ request }) => {
-  const cfg = await (await request.get("http://localhost:4000/v1/public-config")).json();
+  const cfg = await (await request.get(`${process.env.E2E_API_URL || "http://localhost:4000"}/v1/public-config`)).json();
   expect(JSON.stringify(cfg)).not.toMatch(/price|markup|margin/i);
 });

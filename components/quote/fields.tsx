@@ -7,6 +7,7 @@
  */
 import type { ReactNode } from "react";
 import { AlertCircle, Check } from "lucide-react";
+import { useQuoteT } from "./i18n";
 
 export const fieldId = (path: string) => `q-${path.replace(/\./g, "-")}`;
 const errId = (path: string) => `${fieldId(path)}-error`;
@@ -35,11 +36,12 @@ export function FieldShell({
   children: ReactNode;
   className?: string;
 }) {
+  const { t } = useQuoteT();
   return (
     <div className={className}>
       <label htmlFor={fieldId(path)} className="mb-1.5 flex items-baseline justify-between gap-2 text-sm font-semibold text-navy">
         <span>{label}</span>
-        {optional && <span className="text-xs font-normal text-muted">Optional</span>}
+        {optional && <span className="text-xs font-normal text-muted">{t.optional}</span>}
       </label>
       {children}
       {hint && !error && <p id={`${fieldId(path)}-hint`} className="mt-1.5 text-xs text-muted">{hint}</p>}
@@ -153,7 +155,7 @@ export function SelectField<T extends string>({
   error,
   hint,
   optional,
-  placeholder = "Select…",
+  placeholder,
   className,
 }: {
   path: string;
@@ -167,6 +169,7 @@ export function SelectField<T extends string>({
   placeholder?: string;
   className?: string;
 }) {
+  const { t } = useQuoteT();
   return (
     <FieldShell path={path} label={label} hint={hint} error={error} optional={optional} className={className}>
       <select
@@ -183,7 +186,7 @@ export function SelectField<T extends string>({
         }}
       >
         <option value="" disabled>
-          {placeholder}
+          {placeholder ?? t.select}
         </option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>

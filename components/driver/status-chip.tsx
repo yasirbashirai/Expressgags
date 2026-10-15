@@ -2,12 +2,12 @@
 const TONE: Record<string, string> = {
   CONFIRMED: "bg-cloud text-navy ring-1 ring-line",
   DRIVER_ASSIGNED: "bg-navy-100 text-navy",
-  EN_ROUTE: "bg-orange text-white",
+  EN_ROUTE: "bg-orange-600 text-white",
   PICKED_UP: "bg-navy text-white",
   AT_FACILITY: "bg-navy-700 text-white",
   TRANSFERRED_TO_CARRIER: "bg-navy-700 text-white",
   IN_TRANSIT: "bg-navy text-white",
-  OUT_FOR_DELIVERY: "bg-orange text-white",
+  OUT_FOR_DELIVERY: "bg-orange-600 text-white",
   DELIVERED: "bg-emerald-700 text-white",
   CANCELLED: "bg-rose-700 text-white",
 };

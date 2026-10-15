@@ -126,7 +126,7 @@ export function JobFlow({ orderId }: { orderId: string }) {
   if (loadError) {
     return (
       <div className="rounded-3xl bg-white p-6 text-center">
-        <p className="font-display text-lg font-bold text-navy">Job unavailable</p>
+        <h1 className="font-display text-lg font-bold text-navy">Job unavailable</h1>
         <p className="mt-2 text-sm text-slate-ink">{loadError}</p>
         <Link href="/driver" className="mt-5 inline-flex min-h-12 items-center rounded-full bg-navy px-6 font-bold text-white">Back to my jobs</Link>
       </div>
@@ -302,7 +302,7 @@ export function JobFlow({ orderId }: { orderId: string }) {
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
           <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1"><Clock className="h-3.5 w-3.5" aria-hidden />{job.timeWindow ? WINDOW_LABEL[job.timeWindow] ?? job.timeWindow : "Window to confirm"}</span>
           <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1"><Package className="h-3.5 w-3.5" aria-hidden />{total} {total === 1 ? "piece" : "pieces"}</span>
-          {job.priority !== "NORMAL" && <span className="inline-flex items-center gap-1 rounded-full bg-orange px-2.5 py-1"><Crown className="h-3.5 w-3.5" aria-hidden />{job.priority}</span>}
+          {job.priority !== "NORMAL" && <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2.5 py-1"><Crown className="h-3.5 w-3.5" aria-hidden />{job.priority}</span>}
           {job.guestName && <span className="rounded-full bg-white/10 px-2.5 py-1">Guest: {job.guestName}{job.guestRoom ? ` · Room ${job.guestRoom}` : ""}</span>}
         </div>
         {stale && <p className="mt-3 rounded-xl bg-white/10 p-2.5 text-xs">Offline copy of this job. Changes will sync when you have signal.</p>}
@@ -475,7 +475,7 @@ function ScanProgress({ scanned, total }: { scanned: number; total: number }) {
         {n === total && <span className="rounded-full bg-emerald-700 px-3 py-1 text-xs font-bold text-white">All pieces</span>}
       </div>
       <div className="mt-2 h-3 overflow-hidden rounded-full bg-cloud" role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={n} aria-label="Pieces scanned">
-        <div className="h-full rounded-full bg-orange transition-all" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-orange-600 transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -532,7 +532,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   return (
     <section className="rounded-3xl border border-line bg-white p-4 shadow-[var(--shadow-card)]" aria-labelledby={`step-${n}`}>
       <h2 id={`step-${n}`} className="mb-3 flex items-center gap-2.5 font-display text-lg font-bold text-navy">
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-orange text-sm text-white">{n}</span>{title}
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-orange-600 text-sm text-white">{n}</span>{title}
       </h2>
       {children}
     </section>
@@ -542,7 +542,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 function BigButton({ children, onClick, disabled, icon, variant = "primary" }: { children: React.ReactNode; onClick: () => void; disabled?: boolean; icon?: React.ReactNode; variant?: "primary" | "ghost" }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled}
-      className={`flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-4 text-base font-bold transition disabled:opacity-50 ${variant === "primary" ? "bg-orange text-white shadow-[0_10px_24px_-12px_rgb(224_96_16/0.9)] active:bg-orange-600" : "border-2 border-navy bg-white text-navy active:bg-navy-50"}`}>
+      className={`flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl px-4 text-base font-bold transition disabled:opacity-50 ${variant === "primary" ? "bg-orange-600 text-white shadow-[0_10px_24px_-12px_rgb(224_96_16/0.9)] active:bg-orange-700" : "border-2 border-navy bg-white text-navy active:bg-navy-50"}`}>
       {icon}{children}
     </button>
   );

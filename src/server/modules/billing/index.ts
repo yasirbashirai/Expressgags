@@ -16,6 +16,7 @@ import { prisma } from "../../db";
 import type { Prisma } from "../../generated/prisma/client";
 import { isProd } from "../../lib/env";
 import { asyncHandler, HttpError } from "../../lib/errors";
+import { csvSafe } from "../../lib/security";
 import { payments } from "../../providers/registry";
 import "../../providers/stripe"; // registers the real Stripe adapter when STRIPE_SECRET_KEY is set
 import "../../providers/quickbooks"; // registers the real QuickBooks adapter when QBO_* keys are set
@@ -34,7 +35,7 @@ export const publicRouter = Router();
 export const webhookRouter = Router();
 
 const csv = (rows: (string | number | null | undefined)[][]) =>
-  rows.map((r) => r.map((v) => (v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))).join(",")).join("\n");
+  rows.map((r) => r.map(csvSafe).join(",")).join("\n"); // csvSafe neutralizes spreadsheet formula injection
 const dollars = (c: number) => (c / 100).toFixed(2);
 
 /* ---------------------------------- Admin --------------------------------- */

@@ -141,6 +141,10 @@ export const quoteRequestSchema = z
     attachmentIds: z.array(z.string().max(100)).max(10).default([]),
     acceptsProhibitedItemsPolicy: z.literal(true, { message: "Please confirm the prohibited-items policy" }),
     consentToContact: z.literal(true, { message: "Please agree to be contacted about this request" }),
+    /** Language the customer used (confirmation emails and messages follow it) */
+    language: z.enum(["en", "es"]).optional(),
+    /** Optional Express Bags protection plan (only accepted while the protection module is live) */
+    protectionTier: z.enum(["basic", "plus", "vip"]).optional(),
     /** Honeypot — must stay empty (bots fill it) */
     website: z.string().max(0).optional().or(z.literal("")),
   });

@@ -25,12 +25,18 @@ export function languagePeer(pathname: string): { lang: "en" | "es"; href: strin
     const rest = pathname.slice(3);
     if (rest === "" || rest === "/") return { lang: "es", href: "/" };
     if (rest === "/servicios") return { lang: "es", href: "/services" };
+    if (rest === "/solicitar-cotizacion") return { lang: "es", href: "/request-a-quote" };
+    const sv = rest.match(/^\/servicios\/([a-z0-9-]+)$/);
+    if (sv) return { lang: "es", href: `/services/${sv[1]}` };
     const m = rest.match(/^\/areas\/([a-z0-9-]+)$/);
     if (m) return { lang: "es", href: `/service-areas/${m[1]}` };
     return { lang: "es", href: "/" };
   }
   if (pathname === "/") return { lang: "en", href: "/es" };
   if (pathname === "/services") return { lang: "en", href: "/es/servicios" };
+  if (pathname === "/request-a-quote") return { lang: "en", href: "/es/solicitar-cotizacion" };
+  const svc = pathname.match(/^\/services\/([a-z0-9-]+)$/);
+  if (svc) return { lang: "en", href: `/es/servicios/${svc[1]}` };
   const m = pathname.match(/^\/service-areas\/([a-z0-9-]+)$/);
   if (m) return { lang: "en", href: `/es/areas/${m[1]}` };
   return { lang: "en", href: "/es" };
@@ -42,13 +48,13 @@ const LABELS = {
 };
 
 /** Pages where the mobile bottom action bar would get in the way. */
-const NO_BAR = ["/request-a-quote", "/account", "/driver", "/admin", "/survey", "/q/", "/invoice/", "/pay/", "/track"];
+const NO_BAR = ["/request-a-quote", "/es/solicitar-cotizacion", "/account", "/driver", "/admin", "/survey", "/q/", "/invoice/", "/pay/", "/track"];
 
 export function SiteHeader() {
   const pathname = usePathname() || "/";
   const peer = languagePeer(pathname);
   const t = LABELS[peer.lang];
-  const quoteHref = peer.lang === "es" ? "/request-a-quote?lang=es" : "/request-a-quote";
+  const quoteHref = peer.lang === "es" ? "/es/solicitar-cotizacion" : "/request-a-quote";
 
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState<MenuKey>(null);

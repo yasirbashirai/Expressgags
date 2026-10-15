@@ -12,9 +12,48 @@ const mediaPatterns = apiOrigins.map((o) => {
   return { protocol: u.protocol.replace(":", "") as "http" | "https", hostname: u.hostname, port: u.port, pathname: "/v1/content/media/**" };
 });
 
+/**
+ * Content-Security-Policy (docs/SECURITY.md). Static pages can't carry per-request nonces, so inline
+ * scripts are allowed ('unsafe-inline' is required by the Next.js app-router bootstrap) but every
+ * script/connect/img host is allow-listed. Analytics/ads hosts are only contacted after consent
+ * (components/marketing/consent-and-tags.tsx). Dev needs 'unsafe-eval' for React Refresh.
+ */
+const isProdBuild = process.env.NODE_ENV === "production";
+const apiOrigin = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").origin;
+  } catch {
+    return "http://localhost:4000";
+  }
+})();
+const tagHosts = {
+  script: ["https://www.googletagmanager.com", "https://connect.facebook.net", "https://www.googleadservices.com", "https://googleads.g.doubleclick.net"],
+  connect: ["https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://www.googletagmanager.com", "https://stats.g.doubleclick.net", "https://www.google.com", "https://googleads.g.doubleclick.net", "https://www.facebook.com", "https://connect.facebook.net"],
+  img: ["https://www.google-analytics.com", "https://*.google-analytics.com", "https://www.googletagmanager.com", "https://googleads.g.doubleclick.net", "https://www.google.com", "https://www.facebook.com"],
+};
+const csp = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isProdBuild ? "" : " 'unsafe-eval'"} ${tagHosts.script.join(" ")}`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src 'self' data: blob: ${apiOrigin} ${tagHosts.img.join(" ")}`,
+  "font-src 'self' data:",
+  `connect-src 'self' ${apiOrigin} ${tagHosts.connect.join(" ")}${isProdBuild ? "" : " ws: http://localhost:*"}`,
+  `media-src 'self' blob: ${apiOrigin}`,
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "frame-src 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  ...(isProdBuild && apiOrigin.startsWith("https://") ? ["upgrade-insecure-requests"] : []),
+].join("; ");
+
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
+  // One root layout per area ((site) en, (es) es-US, admin, driver) → the unmatched-URL 404 is app/global-not-found.tsx
+  experimental: { globalNotFound: true },
   images: { formats: ["image/avif", "image/webp"], remotePatterns: mediaPatterns },
   async redirects() {
     // Old GoDaddy Website Builder URLs → new pages (only where the path actually changes)
@@ -27,9 +66,12 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy", value: csp },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+          ...(isProdBuild ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }] : []),
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },

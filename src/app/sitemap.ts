@@ -31,7 +31,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Spanish (es-US) pages
     entry("/es", 0.8),
     entry("/es/servicios", 0.7),
+    entry("/es/solicitar-cotizacion", 0.8),
     ...markets.map((m) => entry(`/es/areas/${m.slug}`, 0.7)),
+    ...services.map((sv) => entry(`/es/servicios/${sv.slug}`, 0.6)),
     ...posts.map((p) => ({ ...entry(`/blog/${p.slug}`, 0.6), lastModified: new Date(p.updatedAt) })),
     ...categories.map((c) => entry(`/blog/category/${c.slug}`, 0.4, "weekly")),
   ];

@@ -257,8 +257,9 @@ function RuleEditor({ engine, rules, disabled, onSaved, onError }: { engine: "lo
     return { ...draft, ...extra };
   }, [advanced, draft, engine]);
 
-  // Live preview (debounced)
+  // Live preview (debounced). Read-only roles (dispatch) cannot run the STAFF-only preview endpoint.
   useEffect(() => {
+    if (disabled) return;
     const t = setTimeout(async () => {
       try {
         const body = engine === "carrier" ? { engine, rules: merged(), input: SAMPLES.carrier, rates: SAMPLE_RATES } : { engine, rules: merged(), input: SAMPLES[engine] };
@@ -269,7 +270,7 @@ function RuleEditor({ engine, rules, disabled, onSaved, onError }: { engine: "lo
       }
     }, 350);
     return () => clearTimeout(t);
-  }, [engine, merged]);
+  }, [engine, merged, disabled]);
 
   async function save() {
     try {

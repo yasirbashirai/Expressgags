@@ -132,7 +132,7 @@ export default async function MarketPage({ params }: Props) {
             <p className="font-display text-lg font-bold text-navy">¿Habla español?</p>
             <p className="mt-1 max-w-3xl text-slate-ink">{c.spanishLine}</p>
           </div>
-          <div className="flex shrink-0 flex-wrap gap-2"><Link href={`/es/areas/${m.slug}`} hrefLang="es" className="btn-ghost">Ver en español</Link><Link href={`/request-a-quote?market=${m.slug}&lang=es`} className="btn-primary">Solicitar cotización</Link></div>
+          <div className="flex shrink-0 flex-wrap gap-2"><Link href={`/es/areas/${m.slug}`} hrefLang="es" className="btn-ghost">Ver en español</Link><Link href={`/es/solicitar-cotizacion?market=${m.slug}`} className="btn-primary">Solicitar cotización</Link></div>
         </div>
       </section>
 

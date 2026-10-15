@@ -84,7 +84,7 @@ export function Dashboard() {
 
       {showMoney && d.money && (
         <section className="mt-6 grid gap-6 xl:grid-cols-3" aria-label="Revenue">
-          <div className="card p-5 xl:col-span-2 md:p-6">
+          <div className="card min-w-0 p-5 xl:col-span-2 md:p-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-display text-base font-bold text-navy">Revenue</h2>
               <div role="tablist" className="flex rounded-full border border-line p-0.5 text-xs">

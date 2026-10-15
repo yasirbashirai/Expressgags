@@ -51,8 +51,10 @@ export function useProtectionLive() {
   const [live, setLive] = useState(false);
   useEffect(() => {
     let on = true;
-    fetch(`${API_URL}/v1/protection/plans`, { credentials: "include" })
-      .then((r) => on && setLive(r.ok))
+    // Boolean from public config (no 404 probing of the plans endpoint while the module is off)
+    fetch(`${API_URL}/v1/public-config`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => on && setLive(!!j?.protectionLive))
       .catch(() => undefined);
     return () => {
       on = false;

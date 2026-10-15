@@ -7,7 +7,7 @@
  */
 import { createHash } from "node:crypto";
 import jwt from "jsonwebtoken";
-import type { QuoteRequest } from "@/lib/quote-schema";
+import { SERVICE_LABELS, type QuoteRequest } from "@/lib/quote-schema";
 import { prisma } from "../../db";
 import { decideRoute } from "../../engines/decision-engine";
 import { priceLocal } from "../../engines/pricing/local";
@@ -20,6 +20,9 @@ import { maps } from "../../providers/registry";
 import { createOrder } from "../../services/orders";
 import { getActiveRules, getSetting } from "../../settings";
 import { startCheckout } from "./payments";
+
+/** Customer-facing service name (never the internal code). */
+const serviceName = (s: string) => SERVICE_LABELS[s as keyof typeof SERVICE_LABELS] ?? s.replace(/-/g, " ");
 
 const TOKEN_TTL_SECONDS = 15 * 60;
 const secret = () => `${env.jwtSecret}:instant-price`;
@@ -105,7 +108,7 @@ export async function instantBook(r: QuoteRequest, priceToken: string, acceptanc
       customerId: customer.id,
       source: "instant",
       status: "ACCEPTED",
-      title: `Instant booking: ${r.serviceType.replace(/-/g, " ")}`,
+      title: `Instant booking: ${serviceName(r.serviceType)}`,
       subtotalCents: priced.retailCents,
       totalCents: priced.retailCents,
       costCents: priced.costCents,

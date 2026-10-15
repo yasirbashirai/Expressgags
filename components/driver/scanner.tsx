@@ -108,7 +108,7 @@ export function Scanner({ onCode, busy, placeholder = "EB-261015-7K3P-01" }: { o
             className="min-h-14 w-full rounded-2xl border-2 border-line bg-white pl-11 pr-3 font-mono text-base uppercase tracking-wide text-charcoal focus:border-navy focus:outline-none"
           />
         </div>
-        <button type="submit" disabled={busy || !manual.trim()} className="min-h-14 rounded-2xl bg-orange px-5 text-base font-bold text-white disabled:opacity-50">
+        <button type="submit" disabled={busy || !manual.trim()} className="min-h-14 rounded-2xl bg-orange-600 px-5 text-base font-bold text-white disabled:opacity-50">
           Add
         </button>
       </form>

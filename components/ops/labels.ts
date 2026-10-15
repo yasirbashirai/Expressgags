@@ -43,7 +43,7 @@ export const NEXT_STATUSES: Record<string, string[]> = {
 
 export const PRIORITY_STYLE: Record<string, string> = {
   NORMAL: "bg-white text-slate-ink !ring-line",
-  RUSH: "bg-orange text-white",
+  RUSH: "bg-orange-600 text-white",
   VIP: "bg-navy text-white",
 };
 

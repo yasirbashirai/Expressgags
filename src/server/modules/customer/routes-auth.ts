@@ -257,9 +257,9 @@ authRouter.post(
     if (!c.passwordHash || !(await verifyPassword(currentPassword, c.passwordHash))) {
       throw new HttpError(400, "Your current password is incorrect.", [{ path: "currentPassword", message: "Incorrect password" }]);
     }
-    await prisma.customer.update({ where: { id: c.id }, data: { passwordHash: await hashPassword(newPassword) } });
+    const updated = await prisma.customer.update({ where: { id: c.id }, data: { passwordHash: await hashPassword(newPassword) } });
     await auditCustomer(c, "change-password", "customer", c.id);
-    issueCustomerSession(res, c);
+    issueCustomerSession(res, updated); // new fingerprint: every other device is signed out
     res.json({ ok: true });
   }),
 );

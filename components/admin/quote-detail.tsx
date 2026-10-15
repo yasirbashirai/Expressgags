@@ -123,7 +123,7 @@ export function QuoteDetail({ id }: { id: string }) {
       {error && <p className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
 
       <div className="grid gap-6 xl:grid-cols-3">
-        <div className="space-y-6 xl:col-span-2">
+        <div className="min-w-0 space-y-6 xl:col-span-2">
           <LeadSummaryCard quoteId={q.id} />
           <Panel title="Route decision">
             <ul className="list-disc space-y-1 pl-5 text-sm text-slate-ink">
@@ -215,7 +215,7 @@ export function QuoteDetail({ id }: { id: string }) {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Panel title="Customer">
             <ul className="space-y-2 text-sm">
               <li className="flex gap-2"><User className="h-4 w-4 text-muted" aria-hidden />{q.customer.name}{q.company ? ` · ${q.company.name}` : ""}</li>

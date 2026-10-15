@@ -99,7 +99,7 @@ export function BarList({ rows, format = (v: number) => String(v), label }: { ro
       {rows.map((r) => (
         <li key={r.key} title={`${r.label}: ${format(r.value)}${r.hint ? ` · ${r.hint}` : ""}`}>
           <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="truncate text-charcoal">{r.label}</span>
+            <span className="min-w-0 truncate text-charcoal">{r.label}</span>
             <span className="shrink-0 font-semibold text-navy">{format(r.value)}{r.hint && <span className="ml-1 text-xs font-normal text-muted">{r.hint}</span>}</span>
           </div>
           <div className="mt-1 h-2 rounded-full bg-cloud">
@@ -118,8 +118,8 @@ export function Meter({ label, value, target, unit, note }: { label: string; val
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3 text-sm">
-        <span className="text-charcoal">{label}</span>
-        <span className="shrink-0 font-semibold text-navy">{value == null ? "Not measured yet" : `${value}${unit === "%" ? "%" : ` ${unit}`}`} <span className="text-xs font-normal text-muted">/ target {target}{unit === "%" ? "%" : ""}</span></span>
+        <span className="min-w-0 text-charcoal">{label}</span>
+        <span className="text-right font-semibold text-navy">{value == null ? "Not measured yet" : `${value}${unit === "%" ? "%" : ` ${unit}`}`} <span className="text-xs font-normal text-muted">/ target {target}{unit === "%" ? "%" : ""}</span></span>
       </div>
       <div className="mt-1.5 h-2.5 rounded-full bg-cloud" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={target} aria-valuenow={value ?? 0}>
         <div className="h-2.5 rounded-full" style={{ width: `${Math.max(value == null ? 0 : 3, ratio * 100)}%`, background: met ? "#2f63a8" : "#E06010" }} />

@@ -1,0 +1,125 @@
+# Render Blueprint for the Express Bags API + background job worker.
+# The Next.js website deploys to Vercel (see docs/DEPLOY.md). Postgres is Neon (Express Bags' account).
+# All accounts (Render, Vercel, Neon, Stripe, Twilio, EasyPost, …) belong to Express Bags, Inc.
+#
+# Secrets are marked `sync: false` → Render asks for the value when the Blueprint is first applied.
+
+envVarGroups:
+  - name: express-bags-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: TZ
+        value: UTC
+      - key: DATABASE_URL # Neon POOLED connection string (…-pooler…/express_bags?sslmode=require)
+        sync: false
+      - key: DIRECT_DATABASE_URL # Neon DIRECT connection string (no "-pooler") — used only by prisma migrate
+        sync: false
+      - key: DB_POOL_MAX
+        value: "10"
+      - key: JWT_SECRET # 48+ random characters
+        generateValue: true
+      - key: IP_HASH_SALT
+        generateValue: true
+      - key: PUBLIC_WEB_URL
+        value: https://www.express-bags.com
+      - key: PUBLIC_API_URL
+        value: https://api.express-bags.com
+      - key: WEB_ORIGIN
+        value: https://www.express-bags.com,https://express-bags.com
+      - key: WEB_INTERNAL_URL
+        value: https://www.express-bags.com
+      - key: REVALIDATE_SECRET # must equal the value set on Vercel
+        sync: false
+      # Email (Microsoft 365 SMTP AUTH from a licensed service mailbox, e.g. notifications@express-bags.com)
+      - key: SMTP_HOST
+        value: smtp.office365.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        value: "Express Bags <notifications@express-bags.com>"
+      # Providers — leave empty until Express Bags' own accounts are connected (mock mode is used meanwhile)
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: EASYPOST_API_KEY
+        sync: false
+      - key: EASYPOST_WEBHOOK_SECRET
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_STATUS_CALLBACK_URL
+        value: https://api.express-bags.com/v1/webhooks/twilio/status
+      - key: QBO_CLIENT_ID
+        sync: false
+      - key: QBO_CLIENT_SECRET
+        sync: false
+      - key: QBO_REALM_ID
+        sync: false
+      - key: QBO_REFRESH_TOKEN
+        sync: false
+      - key: QBO_ENV
+        value: production
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: HUBSPOT_TOKEN
+        sync: false
+      - key: META_CAPI_TOKEN
+        sync: false
+
+services:
+  # ---------------------------------------------------------------- API
+  - type: web
+    name: express-bags-api
+    runtime: node
+    region: virginia # closest Render region to Florida
+    plan: starter
+    branch: main
+    # --include=dev: the API runs TypeScript via tsx and migrates with the prisma CLI (both devDependencies)
+    buildCommand: npm ci --include=dev && npx prisma generate
+    # Migrations run on every deploy before the new version takes traffic
+    preDeployCommand: npx prisma migrate deploy
+    startCommand: npm run api:start
+    healthCheckPath: /v1/health
+    envVars:
+      - fromGroup: express-bags-shared
+      - key: PORT
+        value: "4000"
+      # The separate worker service runs the notification queue + all scheduled jobs
+      - key: NOTIFICATION_WORKER
+        value: "off"
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+    # Private uploads (photos, signatures, PODs, documents, labels). A disk pins the service to ONE instance
+    # and is included in Render's daily disk snapshots. Follow-up: S3-compatible object storage (docs/DEPLOY.md §6).
+    disk:
+      name: express-bags-uploads
+      mountPath: /var/data
+      sizeGB: 10
+
+  # ---------------------------------------------------------------- Job worker
+  - type: worker
+    name: express-bags-jobs
+    runtime: node
+    region: virginia
+    plan: starter
+    branch: main
+    buildCommand: npm ci --include=dev && npx prisma generate
+    startCommand: npm run jobs:worker
+    envVars:
+      - fromGroup: express-bags-shared
+      - key: NOTIFICATION_WORKER
+        value: "off"

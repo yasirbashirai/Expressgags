@@ -21,7 +21,9 @@ export const mockPayments: PaymentsProvider = {
 export const logSms: SmsProvider = {
   name: "log",
   async send(to, body, channel = "sms") {
-    console.log(`[sms:${channel}] → ${to}: ${body}`);
+    // Never log message bodies in production (they can contain tracking/survey links)
+    if (process.env.NODE_ENV === "production") console.log(`[sms:${channel}] logged (no provider configured) → ${to.slice(0, -4).replace(/\d/g, "•")}${to.slice(-4)}, ${body.length} chars`);
+    else console.log(`[sms:${channel}] → ${to}: ${body}`);
     return { status: "LOGGED" };
   },
 };

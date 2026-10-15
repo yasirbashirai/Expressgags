@@ -7,7 +7,7 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 
 /** Shared building blocks for the Spanish (/es) pages. */
 
-export function EsHero({ eyebrow, title, accent, lead, crumbs }: { eyebrow: string; title: string; accent?: string; lead: string; crumbs: { name: string; path: string }[] }) {
+export function EsHero({ eyebrow, title, accent, lead, crumbs, ctaHref = esCommon.ctaHref }: { eyebrow: string; title: string; accent?: string; lead: string; crumbs: { name: string; path: string }[]; ctaHref?: string }) {
   return (
     <section className="relative isolate overflow-hidden bg-navy-950 text-white">
       <div aria-hidden className="stage-grid absolute inset-0 -z-10 opacity-50 [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_70%)]" />
@@ -21,7 +21,7 @@ export function EsHero({ eyebrow, title, accent, lead, crumbs }: { eyebrow: stri
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/80">{lead}</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href={esCommon.ctaHref} className="btn-primary">{esCommon.cta} <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+          <Link href={ctaHref} className="btn-primary">{esCommon.cta} <ArrowRight className="h-4 w-4" aria-hidden /></Link>
           <a href={contact.phoneHref} className="btn-ghost-light"><Phone className="h-4 w-4" aria-hidden /> {contact.phoneDisplay}</a>
         </div>
         <p className="mt-5 text-sm text-white/60">{esCommon.dispatchNote}</p>
@@ -39,11 +39,11 @@ export function EsServicesGrid() {
         const es = esServices[s.slug];
         return (
           <li key={s.slug}>
-            <Link href={`/services/${s.slug}`} hrefLang="en" className="group flex h-full flex-col rounded-[1.25rem] border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-orange/40 hover:shadow-[var(--shadow-card)]">
+            <Link href={`/es/servicios/${s.slug}`} className="group flex h-full flex-col rounded-[1.25rem] border border-line bg-white p-6 transition hover:-translate-y-0.5 hover:border-orange/40 hover:shadow-[var(--shadow-card)]">
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-orange-700"><Icon className="h-5 w-5" aria-hidden /></span>
               <h3 className="mt-5 text-lg font-bold">{es.name}</h3>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-ink">{es.short}</p>
-              <span className="mt-4 text-xs font-semibold text-orange-700">Detalles (en inglés) →</span>
+              <span className="mt-4 text-xs font-semibold text-orange-700">Ver servicio →</span>
             </Link>
           </li>
         );

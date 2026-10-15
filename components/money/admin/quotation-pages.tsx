@@ -84,12 +84,14 @@ export function EditQuotation({ id }: { id: string }) {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Panel title="Acceptance record">
           {q.acceptedAt ? (
-            <dl className="space-y-1 text-sm">
-              <div><dt className="inline text-muted">Signed by </dt><dd className="inline font-semibold text-navy">{q.acceptedName}{q.acceptedTitle ? `, ${q.acceptedTitle}` : ""}</dd></div>
-              <div><dt className="inline text-muted">When </dt><dd className="inline">{dateTime(q.acceptedAt)}</dd></div>
-              <div><dt className="inline text-muted">IP </dt><dd className="inline font-mono text-xs">{q.acceptedIp ?? "-"}</dd></div>
-              {q.order && <div className="pt-2"><Link className="font-semibold text-orange-700" href={`/admin/orders/${q.order.id}`}>Order {q.order.reference} · {q.order.paymentStatus.replace(/_/g, " ").toLowerCase()}</Link></div>}
-            </dl>
+            <>
+              <dl className="space-y-1 text-sm">
+                <div><dt className="inline text-muted">Signed by </dt><dd className="inline font-semibold text-navy">{q.acceptedName}{q.acceptedTitle ? `, ${q.acceptedTitle}` : ""}</dd></div>
+                <div><dt className="inline text-muted">When </dt><dd className="inline">{dateTime(q.acceptedAt)}</dd></div>
+                <div><dt className="inline text-muted">IP </dt><dd className="inline font-mono text-xs">{q.acceptedIp ?? "-"}</dd></div>
+              </dl>
+              {q.order && <p className="pt-2 text-sm"><Link className="font-semibold text-orange-700" href={`/admin/orders/${q.order.id}`}>Order {q.order.reference} · {q.order.paymentStatus.replace(/_/g, " ").toLowerCase()}</Link></p>}
+            </>
           ) : q.declineReason ? (
             <p className="text-sm text-rose-800">Declined: {q.declineReason}</p>
           ) : (

@@ -139,7 +139,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
         {groups.map((g) => (
           <div key={g.title}>
-            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{g.title}</p>
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/65">{g.title}</p>
             <ul className="space-y-0.5">
               {g.items.map(({ href, label, Icon }) => (
                 <li key={href}>

@@ -18,6 +18,10 @@ export type DomainEvents = {
   "invoice.issued": { invoiceId: string };
   "customer.registered": { customerId: string };
   "claim.submitted": { claimId: string };
+  /** Storage retrieval due within 24h, or a booking that just went into overstay (notifications subscribe) */
+  "storage.reminder": { bookingId: string; orderId?: string; kind: "retrieval-due" | "overstay"; message?: string };
+  /** An overstay charge was recorded at release; staff confirm it before it is invoiced */
+  "storage.overstay_charge": { bookingId: string; orderId?: string; amountCents: number };
 };
 
 type Handler<K extends keyof DomainEvents> = (payload: DomainEvents[K]) => void | Promise<void>;

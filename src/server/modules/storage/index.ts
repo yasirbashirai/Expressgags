@@ -34,7 +34,7 @@ import type { PlatformModule } from "../types";
 import { COMBINATION_KEYS, COMBINATIONS, type Combination } from "./capacity";
 import {
   availability, availabilitySchema, bookingDetail, bookingSchema, calendar, calendarSchema, cancelBooking, checkIn, checkInSchema, createBooking, dashboard,
-  extendBooking, extendSchema, listBookings, listLocations, listSchema, locationSchema, release, releaseSchema, saveLocation, sweepStorage,
+  extendBooking, extendSchema, listBookings, listLocations, listSchema, locationSchema, pendingOverstayCharges, release, releaseSchema, saveLocation, sweepStorage,
 } from "./service";
 
 export const adminRouter = Router();
@@ -45,6 +45,18 @@ adminRouter.use(requireAuth, requireRole("STAFF", "DISPATCHER"));
 const actor = (req: Express.Request & { user?: { id: string; email: string; name: string | null } }) => ({ id: req.user!.id, name: req.user!.name || req.user!.email });
 
 adminRouter.get("/dashboard", asyncHandler(async (_req, res) => res.json({ ok: true, ...(await dashboard()) })));
+
+/**
+ * Overstay charges recorded at release and not invoiced yet, as invoice-ready lines
+ * (pass to billing's createInvoice extraLines after staff confirm): ?orderIds=a,b
+ */
+adminRouter.get(
+  "/overstay-charges",
+  asyncHandler(async (req, res) => {
+    const ids = String(req.query.orderIds ?? "").split(",").map((x) => x.trim()).filter((x) => /^[a-z0-9]{10,40}$/i.test(x)).slice(0, 50);
+    res.json({ ok: true, charges: await pendingOverstayCharges(ids) });
+  }),
+);
 
 adminRouter.get("/combinations", (_req, res) => res.json({ ok: true, combinations: COMBINATION_KEYS.map((k) => ({ value: k, label: COMBINATIONS[k].label })) }));
 

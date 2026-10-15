@@ -53,7 +53,7 @@ export function JobList() {
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-navy">My jobs</h1>
-          {jobs && scope === "today" && <p className="text-sm text-slate-ink">{active === 0 ? "No open jobs right now." : `${active} open ${active === 1 ? "job" : "jobs"} today`}</p>}
+          {jobs && scope === "today" && <p className="text-sm text-slate-ink">{active === 0 ? "No open jobs today. Check Upcoming for later days." : `${active} open ${active === 1 ? "job" : "jobs"} today`}</p>}
         </div>
         <button onClick={() => void load(scope)} aria-label="Refresh jobs" className="grid h-12 w-12 place-items-center rounded-full border border-line bg-white text-navy active:bg-navy-50">
           <RefreshCw className="h-5 w-5" aria-hidden />
@@ -105,7 +105,7 @@ export function JobList() {
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold">
                     <span className="inline-flex items-center gap-1 rounded-full bg-navy-50 px-2.5 py-1 text-navy"><Package className="h-3.5 w-3.5" aria-hidden />{j.pieceCount} {j.pieceCount === 1 ? "piece" : "pieces"}</span>
-                    {j.priority !== "NORMAL" && <span className="inline-flex items-center gap-1 rounded-full bg-orange px-2.5 py-1 text-white"><Crown className="h-3.5 w-3.5" aria-hidden />{j.priority}</span>}
+                    {j.priority !== "NORMAL" && <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2.5 py-1 text-white"><Crown className="h-3.5 w-3.5" aria-hidden />{j.priority}</span>}
                     {j.vehicle && <span className="rounded-full bg-cloud px-2.5 py-1 text-slate-ink">Unit {j.vehicle.unitNumber}</span>}
                     {j.specialHandling && <span className="rounded-full bg-orange-50 px-2.5 py-1 text-orange-700">Special handling</span>}
                   </div>

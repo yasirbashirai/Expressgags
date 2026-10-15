@@ -3,6 +3,8 @@ import { Globe, Luggage, PackageCheck, Plane, Ship, Truck, Users, Warehouse, typ
 import { airports, markets, otherFloridaRoute, ports } from "@/content/site";
 import type { ServiceType } from "@/lib/quote-schema";
 import type { DraftItem, LocationType, MarketOption, QuoteDraft } from "./flow";
+import { esMarkets } from "@/content/es";
+import { QUOTE_STRINGS, type Lang } from "@/content/i18n/quote";
 
 export const SERVICE_CARDS: { type: ServiceType; title: string; text: string; Icon: LucideIcon; note?: string }[] = [
   { type: "luggage-local", title: "Local luggage pickup & delivery", text: "Hotel, home, airport, port or venue, anywhere in our Florida markets.", Icon: Luggage },
@@ -106,4 +108,23 @@ export const VEHICLE_CHOICES = ["Cargo van", "15-foot box truck", "20-foot box t
 
 export function marketLabel(v: string) {
   return MARKET_CHOICES_SHIPPING.find((m) => m.value === v)?.label ?? v;
+}
+
+/* ------------------------------------------------------------------ */
+/* Language-aware labels (values never change, only labels)            */
+/* ------------------------------------------------------------------ */
+
+/** Market choices in the wizard language. Spanish market names come from src/content/es.ts. */
+export function marketChoicesFor(lang: Lang, shipping = false): { value: MarketOption; label: string }[] {
+  const t = QUOTE_STRINGS[lang];
+  const list: { value: MarketOption; label: string }[] = [
+    ...markets.map((m) => ({ value: m.slug as MarketOption, label: lang === "es" ? esMarkets[m.slug]?.name ?? m.name : m.name })),
+    { value: "other-florida", label: t.otherFlorida },
+  ];
+  if (shipping) list.push({ value: "outside-florida", label: t.outsideFlorida });
+  return list;
+}
+
+export function marketLabelFor(v: string, lang: Lang) {
+  return marketChoicesFor(lang, true).find((m) => m.value === v)?.label ?? v;
 }

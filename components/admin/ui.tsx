@@ -12,15 +12,15 @@ export const inputCls =
   "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-charcoal shadow-sm outline-none transition placeholder:text-muted focus:border-navy focus:ring-2 focus:ring-navy/15 disabled:bg-cloud";
 
 export function StatCard({ label, value, hint, tone = "white", Icon }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "white" | "navy" | "orange"; Icon?: React.ComponentType<{ className?: string }> }) {
-  const t = { white: "bg-white text-navy border-line", navy: "bg-navy text-white border-navy", orange: "bg-orange text-white border-orange" }[tone];
+  const t = { white: "bg-white text-navy border-line", navy: "bg-navy text-white border-navy", orange: "bg-orange-600 text-white border-orange-600" }[tone];
   return (
     <div className={`rounded-2xl border p-5 shadow-[var(--shadow-card)] ${t}`}>
       <div className="flex items-start justify-between gap-3">
-        <p className={`text-xs font-semibold uppercase tracking-[0.14em] ${tone === "white" ? "text-muted" : "text-white/70"}`}>{label}</p>
+        <p className={`text-xs font-semibold uppercase tracking-[0.14em] ${tone === "white" ? "text-muted" : "text-white"}`}>{label}</p>
         {Icon && <Icon className={`h-4 w-4 ${tone === "white" ? "text-orange" : "text-white/80"}`} />}
       </div>
       <p className="mt-2 font-display text-3xl font-bold">{value}</p>
-      {hint && <p className={`mt-1 text-xs ${tone === "white" ? "text-slate-ink" : "text-white/75"}`}>{hint}</p>}
+      {hint && <p className={`mt-1 text-xs ${tone === "white" ? "text-slate-ink" : "text-white"}`}>{hint}</p>}
     </div>
   );
 }
@@ -128,7 +128,7 @@ export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { valu
       {tabs.map((t) => (
         <button key={t.value} role="tab" aria-selected={value === t.value} onClick={() => onChange(t.value)}
           className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition ${value === t.value ? "bg-navy text-white" : "text-slate-ink hover:bg-cloud"}`}>
-          {t.label}{typeof t.count === "number" && <span className="ml-1.5 opacity-70">{t.count}</span>}
+          {t.label}{typeof t.count === "number" && <span className="ml-1.5 font-normal">{t.count}</span>}
         </button>
       ))}
     </div>

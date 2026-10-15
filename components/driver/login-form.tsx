@@ -72,7 +72,7 @@ export function DriverLoginForm() {
             </div>
           )}
           {error && <p role="alert" className="rounded-xl bg-rose-600/90 p-3 text-sm font-semibold">{error}</p>}
-          <button type="submit" disabled={busy} className="min-h-14 w-full rounded-2xl bg-orange text-lg font-bold text-white shadow-lg active:bg-orange-600 disabled:opacity-60">
+          <button type="submit" disabled={busy} className="min-h-14 w-full rounded-2xl bg-orange-600 text-lg font-bold text-white shadow-lg active:bg-orange-600 disabled:opacity-60">
             {busy ? "Signing in…" : needsCode ? "Verify code" : "Sign in"}
           </button>
         </form>

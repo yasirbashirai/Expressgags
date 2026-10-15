@@ -137,6 +137,8 @@ model Payment {
   createdAt     DateTime   @default(now())
 
   @@index([status])
+  /// Revenue windows on the dashboard/reports (status + date range)
+  @@index([status, createdAt])
 }
 
 model SavedAddress {

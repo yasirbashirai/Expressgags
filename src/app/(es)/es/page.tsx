@@ -48,7 +48,7 @@ export default function EsHomePage() {
           <div className="rounded-[1.75rem] bg-navy p-8 text-white md:p-10">
             <h2 className="text-2xl font-bold text-white md:text-3xl">{esHome.b2bTitle}</h2>
             <p className="mt-4 text-white/75">{esHome.b2bText}</p>
-            <Link href="/request-a-quote?type=business&lang=es" className="btn-primary mt-8">Solicitar cuenta empresarial</Link>
+            <Link href="/es/solicitar-cotizacion?type=business" className="btn-primary mt-8">Solicitar cuenta empresarial</Link>
           </div>
           <div className="rounded-[1.75rem] border border-line bg-sand p-8 md:p-10">
             <h2 className="text-2xl font-bold">{esHome.travelerTitle}</h2>

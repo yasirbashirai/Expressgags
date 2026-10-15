@@ -298,6 +298,8 @@ model Order {
   @@index([customerId])
   @@index([companyId])
   @@index([market])
+  @@index([createdAt])
+  @@index([paymentStatus])
 }
 
 model OrderPiece {

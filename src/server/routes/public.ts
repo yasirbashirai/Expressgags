@@ -3,6 +3,7 @@
  *   POST /v1/quotes   POST /v1/uploads   POST /v1/careers   POST /v1/contact   GET /v1/health
  * Bots that fill the honeypot field "website" receive a normal-looking success and nothing is stored.
  */
+import { timingSafeEqual } from "node:crypto";
 import { Router, type Request } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -15,6 +16,8 @@ import { parseMultipart, storeUpload } from "../lib/multipart";
 import { quoteReference } from "../lib/reference";
 import { createQuote, ROUTE_MESSAGES } from "../services/quotes";
 import { getSetting } from "../settings";
+import { protectionLive } from "../modules/protection/plans";
+import { readiness } from "../lib/readiness";
 
 export const publicRouter = Router();
 
@@ -32,6 +35,23 @@ publicRouter.get("/health", (_req, res) => {
   res.json({ ok: true, service: "express-bags-api" });
 });
 
+/**
+ * Readiness: database, migrations, required config (503 when not ready). No secrets in the output.
+ * Details (which checks/warnings) only with header `x-ready-token: <READY_TOKEN>`; everyone else sees ok/not ok.
+ */
+publicRouter.get(
+  "/ready",
+  asyncHandler(async (req, res) => {
+    const r = await readiness();
+    const token = process.env.READY_TOKEN;
+    const provided = req.get("x-ready-token") ?? "";
+    const detailed =
+      process.env.NODE_ENV !== "production" ||
+      (!!token && provided.length === token.length && timingSafeEqual(Buffer.from(provided), Buffer.from(token)));
+    res.status(r.ok ? 200 : 503).set("Cache-Control", "no-store").json(detailed ? r : { ok: r.ok });
+  }),
+);
+
 /** Public, non-sensitive site config (e.g. whether the public email may be shown). */
 publicRouter.get(
   "/public-config",
@@ -45,6 +65,8 @@ publicRouter.get(
       // Public booleans only (never prices): the quote wizard shows instant prices when these are on
       instantBookingEnabled: Boolean(features.pricingEnabled && features.instantBookingEnabled),
       carrierShippingEnabled: Boolean(features.pricingEnabled && features.instantBookingEnabled && features.carrierShippingEnabled),
+      // Optional protection: true only when enabled AND legally approved (tiers come from /v1/protection/plans)
+      protectionLive: (await protectionLive()).live,
     });
   }),
 );

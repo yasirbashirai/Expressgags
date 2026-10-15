@@ -30,7 +30,7 @@ function SyncBanner() {
   const router = useRouter();
   if (needsLogin) {
     return (
-      <div role="status" className="flex items-center justify-between gap-3 bg-orange px-4 py-2.5 text-sm font-semibold text-white">
+      <div role="status" className="flex items-center justify-between gap-3 bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white">
         <span>Session expired. {pendingLabel(pending)}.</span>
         <button onClick={() => router.push("/driver/login?resume=1")} className="min-h-10 rounded-full bg-white px-4 text-orange-700">Sign in</button>
       </div>
@@ -93,7 +93,7 @@ function Shell({ children }: { children: ReactNode }) {
         <div>
           <p className="font-display text-xl font-bold">Driver app unavailable</p>
           <p className="mt-2 text-white/80">{error}</p>
-          <button onClick={signOut} className="mt-6 min-h-12 rounded-full bg-orange px-6 font-bold">Sign in with another account</button>
+          <button onClick={signOut} className="mt-6 min-h-12 rounded-full bg-orange-600 px-6 font-bold">Sign in with another account</button>
         </div>
       </div>
     );

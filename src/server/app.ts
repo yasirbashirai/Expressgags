@@ -6,19 +6,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import { env } from "./lib/env";
 import { errorMiddleware } from "./lib/errors";
+import { csrfGuard, globalRequestLimiter, globalWriteLimiter, originAllowed } from "./lib/security";
 import { adminRouter } from "./routes/admin";
 import { publicRouter } from "./routes/public";
 import { platformModules } from "./modules";
-
-/** Allowed browser origins: WEB_ORIGIN list + local dev ports 3000–3499. */
-function originAllowed(origin: string | undefined) {
-  if (!origin) return true; // server-to-server, curl
-  if (env.webOrigins.includes(origin)) return true;
-  if (!/^http:\/\/(localhost|127\.0\.0\.1):3[0-4]\d\d$/.test(origin)) return false;
-  return env.nodeEnv !== "production";
-}
 
 export function createApp() {
   const app = express();
@@ -35,6 +27,9 @@ export function createApp() {
     }),
   );
   app.use(cookieParser());
+  // CSRF: state-changing requests must come from an allowed browser origin (lib/security.ts)
+  app.use(csrfGuard);
+  app.use(globalRequestLimiter, globalWriteLimiter);
   // Provider webhooks need the raw body (signature verification) → mounted before the JSON parser
   for (const m of platformModules) for (const r of m.routes) if (r.scope === "webhook") app.use(`/v1${r.path}`, r.router);
   // JSON only for non-multipart routes; multipart endpoints read the raw stream themselves

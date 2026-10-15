@@ -82,6 +82,10 @@ export type QuoteDraft = {
   acceptsProhibitedItemsPolicy: boolean;
   consentToContact: boolean;
   website: string; // honeypot
+  /** Wizard language; sent with the request so confirmations go out in the same language */
+  language: "en" | "es";
+  /** Optional protection plan (only offered while the protection module is live) */
+  protectionTier: "" | "basic" | "plus" | "vip";
 };
 
 export const emptyLocation = (type: LocationType | "" = "", market: MarketOption | "" = ""): DraftLocation => ({
@@ -143,6 +147,8 @@ export function emptyDraft(): QuoteDraft {
     acceptsProhibitedItemsPolicy: false,
     consentToContact: false,
     website: "",
+    language: "en",
+    protectionTier: "",
   };
 }
 
@@ -348,7 +354,9 @@ export function buildPayload(d: QuoteDraft): Record<string, unknown> {
     acceptsProhibitedItemsPolicy: d.acceptsProhibitedItemsPolicy,
     consentToContact: d.consentToContact,
     website: d.website,
+    language: d.language === "es" ? "es" : "en",
   };
+  if (d.protectionTier) payload.protectionTier = d.protectionTier;
   return payload;
 }
 
@@ -461,6 +469,8 @@ export function reviveDraft(raw: unknown): QuoteDraft | null {
       items: Array.isArray(r.items) && r.items.length ? r.items.map((i) => ({ ...emptyItem(), ...i })) : base.items,
       extraStops: Array.isArray(r.extraStops) ? r.extraStops.map((l) => ({ ...emptyLocation(), ...l })) : [],
       attachments: Array.isArray(r.attachments) ? r.attachments : [],
+      language: r.language === "es" ? "es" : "en",
+      protectionTier: r.protectionTier === "basic" || r.protectionTier === "plus" || r.protectionTier === "vip" ? r.protectionTier : "",
       // Never restore the legal confirmations or honeypot
       acceptsProhibitedItemsPolicy: false,
       consentToContact: false,

@@ -11,6 +11,7 @@ import { z } from "zod";
 import { prisma } from "../../db";
 import type { Prisma } from "../../generated/prisma/client";
 import { overstayCharge, priceStorage } from "../../engines/pricing/storage";
+import { emit } from "../../lib/events";
 import { HttpError } from "../../lib/errors";
 import { storageReference } from "../../lib/reference";
 import { addOrderEvent, transitionOrder } from "../../services/orders";
@@ -357,14 +358,20 @@ export async function release(id: string, input: z.infer<typeof releaseSchema>, 
   if (b.order && input.mode === "customer" && ["AT_FACILITY", "OUT_FOR_DELIVERY", "IN_TRANSIT"].includes(b.order.status)) {
     await transitionOrder(b.order.id, "DELIVERED", { type: "staff", id: actor.id, name: actor.name }, { detail: "Released from storage to the authorized person" });
   }
+  if (overstay > 0) await emit("storage.overstay_charge", { bookingId: id, orderId: b.orderId ?? undefined, amountCents: overstay });
   return { ok: true, overstayCents: overstay };
 }
 
 /* ------------------------- Overstay & reminders -------------------------- */
 
-/** Flags overstays and creates retrieval reminders for bookings ending within `hoursAhead`. */
-export async function sweepStorage(now = new Date(), hoursAhead = 6) {
-  const overdue = await prisma.storageBooking.updateMany({ where: { status: "CHECKED_IN", endsAt: { lt: now } }, data: { status: "OVERSTAY" } });
+/**
+ * Flags overstays and creates retrieval reminders for bookings ending within `hoursAhead`.
+ * Also emits "storage.reminder" (customer notification, sent once per booking and kind by the
+ * notifications module) for retrievals due within `notifyHoursAhead` and for new overstays.
+ */
+export async function sweepStorage(now = new Date(), hoursAhead = 6, notifyHoursAhead = 24) {
+  const newlyOverdue = await prisma.storageBooking.findMany({ where: { status: "CHECKED_IN", endsAt: { lt: now } }, select: { id: true, orderId: true } });
+  const overdue = await prisma.storageBooking.updateMany({ where: { id: { in: newlyOverdue.map((b) => b.id) }, status: "CHECKED_IN" }, data: { status: "OVERSTAY" } });
   const soon = await prisma.storageBooking.findMany({ where: { status: { in: ["RESERVED", "CHECKED_IN"] }, endsAt: { gt: now, lte: new Date(now.getTime() + hoursAhead * 3_600_000) } }, select: { id: true, reference: true, endsAt: true } });
   for (const b of soon) {
     await prisma.reminder.upsert({
@@ -373,7 +380,37 @@ export async function sweepStorage(now = new Date(), hoursAhead = 6) {
       create: { entityType: "storage", entityId: b.id, title: `Storage retrieval due ${b.reference}`, dueAt: b.endsAt },
     });
   }
-  return { overstays: overdue.count, reminders: soon.length };
+  // Customer reminders (the notifications module de-duplicates by booking + kind)
+  const dueForNotice = await prisma.storageBooking.findMany({
+    where: { status: { in: ["RESERVED", "CHECKED_IN"] }, endsAt: { gt: now, lte: new Date(now.getTime() + notifyHoursAhead * 3_600_000) } },
+    select: { id: true, orderId: true },
+  });
+  for (const b of dueForNotice) await emit("storage.reminder", { bookingId: b.id, orderId: b.orderId ?? undefined, kind: "retrieval-due" });
+  for (const b of newlyOverdue) await emit("storage.reminder", { bookingId: b.id, orderId: b.orderId ?? undefined, kind: "overstay" });
+  return { overstays: overdue.count, reminders: soon.length, notified: dueForNotice.length + newlyOverdue.length };
+}
+
+/**
+ * Overstay charges recorded at release that are not on an invoice yet, as lines ready for
+ * billing's createInvoice({ extraLines }). Staff review and confirm them in the invoice builder;
+ * nothing is billed automatically.
+ */
+export async function pendingOverstayCharges(orderIds: string[]) {
+  if (!orderIds.length) return [];
+  const bookings = await prisma.storageBooking.findMany({ where: { orderId: { in: orderIds }, status: "RELEASED" }, select: { id: true, reference: true, orderId: true, pieces: true } });
+  if (!bookings.length) return [];
+  const metas = await prisma.storageBookingMeta.findMany({ where: { bookingId: { in: bookings.map((b) => b.id) }, overstayCents: { gt: 0 } }, select: { bookingId: true, overstayCents: true } });
+  const billed = await prisma.invoiceLine.findMany({
+    where: { orderId: { in: orderIds }, description: { startsWith: "Storage overstay" }, invoice: { status: { not: "VOID" } } },
+    select: { description: true },
+  });
+  const billedText = billed.map((l) => l.description).join("\n");
+  return metas
+    .map((m) => {
+      const b = bookings.find((x) => x.id === m.bookingId)!;
+      return { bookingId: b.id, orderId: b.orderId!, description: `Storage overstay ${b.reference} (${b.pieces} pc)`, quantity: 1, unitCents: m.overstayCents };
+    })
+    .filter((l) => !billedText.includes(l.description));
 }
 
 /* ------------------------- Dashboard & calendar -------------------------- */

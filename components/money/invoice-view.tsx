@@ -62,6 +62,9 @@ export function InvoiceView({ token }: { token: string }) {
 
   const payable = inv.balanceCents > 0 && inv.status !== "VOID";
   return (
+    <>
+    {/* Page heading for screen readers; the document header shows the visual "Invoice" label */}
+    <h1 className="sr-only">Invoice {inv.number}</h1>
     <DocShell
       kind="Invoice"
       number={inv.number}
@@ -111,5 +114,6 @@ export function InvoiceView({ token }: { token: string }) {
       </div>
       {inv.notes && <p className="mt-8 whitespace-pre-line text-sm text-slate-ink">{inv.notes}</p>}
     </DocShell>
+    </>
   );
 }

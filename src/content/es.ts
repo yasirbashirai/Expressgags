@@ -7,7 +7,7 @@
 
 export const esCommon = {
   cta: "Solicitar cotización",
-  ctaHref: "/request-a-quote?lang=es",
+  ctaHref: "/es/solicitar-cotizacion",
   call: "Llamar",
   tagline: "Con cuidado en cada maleta. Con confianza en cada entrega.",
   dispatchNote: "Cada ruta, horario y vehículo se confirma con despacho antes de comprometernos.",
@@ -164,5 +164,177 @@ export const esMarkets: Record<string, EsMarket> = {
     ],
     routes: ["MCO → Port Canaveral", "Hotel en Cocoa Beach → Port Canaveral", "Port Canaveral → hotel en Orlando", "Grupos de crucero desde Orlando"],
     tips: ["Indique naviera, barco y fecha de salida.", "Considere el tráfico del corredor Orlando–Port Canaveral.", "Comparta la cantidad de maletas por pasajero."],
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* Spanish service detail pages (/es/servicios/[slug])                  */
+/* ------------------------------------------------------------------ */
+
+export type EsServiceDetail = {
+  headline: string;
+  intro: string;
+  bullets: string[];
+  audiences: string[];
+  prepare: string[];
+  steps: { t: string; d: string }[];
+  note?: string;
+  seoDescription: string;
+};
+
+export const esServiceDetails: Record<string, EsServiceDetail> = {
+  "vip-group-luggage": {
+    headline: "Equipaje VIP y para grupos, coordinado de principio a fin",
+    intro: "Desde un viajero VIP hasta un grupo completo, coordinamos la recogida, la carga segura, el transporte y una entrega verificada dentro y entre nuestros mercados prioritarios de Florida, siempre sujeto a confirmación de ruta y despacho.",
+    bullets: [
+      "Recogida coordinada, carga segura, transporte y entrega verificada",
+      "Para huéspedes, familias, grupos turísticos, viajeros corporativos, equipos deportivos, artistas y producciones",
+      "Manifiestos, conteo de maletas, varios vehículos, llegadas programadas e instrucciones especiales",
+      "Supervisión con experiencia, manejo cuidadoso, comunicación directa y capacidad de vehículos escalable",
+    ],
+    audiences: ["Viajeros VIP", "Grupos turísticos", "Viajeros corporativos", "Equipos deportivos", "Artistas y producciones"],
+    prepare: ["Fecha, horario y direcciones de recogida y entrega", "Cantidad de maletas por persona o un manifiesto del grupo", "Vuelos, barco o evento relacionado", "Contactos autorizados en ambos extremos"],
+    steps: [
+      { t: "Plan del grupo", d: "Revisamos el manifiesto, los horarios y los accesos para definir vehículos y personal." },
+      { t: "Recogida contada", d: "El equipo confirma la cantidad de piezas y su estado antes de cargar." },
+      { t: "Traslado supervisado", d: "Un despachador responsable sigue el trabajo y comunica cualquier cambio de inmediato." },
+      { t: "Entrega verificada", d: "Volvemos a contar, entregamos solo a la persona autorizada y documentamos la entrega." },
+    ],
+    seoDescription: "Traslados de equipaje VIP y para grupos en Florida: recogida coordinada, carga segura, manifiestos y entrega verificada. Solicite una cotización.",
+  },
+  "hotel-hospitality-logistics": {
+    headline: "Logística de equipaje para hoteles, resorts y DMC",
+    intro: "Traslados programados y a pedido entre hoteles, aeropuertos, puertos de cruceros, recintos y otros puntos aprobados, con puntualidad, trato profesional y estándares de atención al huésped.",
+    bullets: [
+      "Traslados programados y a pedido entre hoteles, aeropuertos, puertos y recintos",
+      "Apoyo a conserjería, botones, empresas de gestión de destinos, operadores turísticos y coordinadores de grupos",
+      "Rutas recurrentes, varias paradas, manifiestos por habitación o por grupo, facturación centralizada y prueba de entrega",
+      "Puntualidad, conducta profesional y cuidado del huésped en cada movimiento",
+    ],
+    audiences: ["Gerentes de hotel y resort", "Conserjería y botones", "DMC", "Operadores turísticos", "Programas de viajes corporativos"],
+    prepare: ["Nombre del huésped o del grupo y número de habitación", "Hora de recogida y destino", "Cantidad y tipo de maletas", "Datos de facturación de la cuenta del hotel"],
+    steps: [
+      { t: "Solicitud del hotel", d: "La conserjería envía la solicitud desde el portal o por teléfono con los datos del huésped." },
+      { t: "Confirmación", d: "Despacho confirma horario, vehículo y punto de entrega." },
+      { t: "Recogida en lobby", d: "Contamos e identificamos cada pieza según el manifiesto." },
+      { t: "Entrega y registro", d: "Entregamos al destino y la prueba de entrega queda disponible para el hotel." },
+    ],
+    seoDescription: "Logística de equipaje para hoteles, resorts y DMC en Florida: traslados programados, manifiestos, facturación centralizada y prueba de entrega.",
+  },
+  "airport-luggage": {
+    headline: "Equipaje en los principales aeropuertos de Florida",
+    intro: "Recogida y entrega planificadas de equipaje relacionadas con MIA, FLL, EYW, PBI, MCO, TPA y RSW, para viajeros que llegan o salen, grupos organizados, hoteles, DMC, organizaciones deportivas y equipos de entretenimiento.",
+    bullets: [
+      "Recogida y entrega planificadas con MIA, FLL, EYW, PBI, MCO, TPA y RSW",
+      "Para viajeros, grupos, hoteles, DMC y equipos deportivos o de entretenimiento",
+      "Tomamos en cuenta aerolínea, horario de llegada, cantidad de maletas, piezas sobredimensionadas, retrasos y puntos de entrega autorizados",
+      "La disponibilidad y el acceso en cada aeropuerto se confirman durante la cotización",
+    ],
+    audiences: ["Viajeros que llegan o salen", "Grupos organizados", "Hoteles y DMC", "Equipos deportivos y de entretenimiento"],
+    prepare: ["Aerolínea, número de vuelo y hora de llegada o salida", "Cantidad de maletas y piezas especiales", "Punto de entrega autorizado en el aeropuerto", "Dirección de destino o de recogida"],
+    steps: [
+      { t: "Datos del vuelo", d: "Usted comparte el vuelo y la cantidad de maletas; planificamos con margen." },
+      { t: "Punto de entrega", d: "Confirmamos el punto autorizado según las reglas de la terminal." },
+      { t: "Manejo y traslado", d: "Contamos las piezas y las trasladamos al hotel, puerto o residencia." },
+      { t: "Entrega documentada", d: "Volvemos a contar y registramos la entrega con el método aprobado." },
+    ],
+    note: "El servicio está sujeto a la ruta, las reglas de la terminal y el acceso confirmado. No ofrecemos acceso a zonas restringidas del aeropuerto.",
+    seoDescription: "Servicio de equipaje en aeropuertos de Florida (MIA, FLL, EYW, PBI, MCO, TPA, RSW): recogida y entrega planificadas. Solicite una cotización.",
+  },
+  "cruise-port-luggage": {
+    headline: "Equipaje de crucero, coordinado con el horario del barco",
+    intro: "Traslados de equipaje programados con PortMiami, Port Everglades, el Puerto de Key West, el Puerto de Palm Beach, Port Canaveral y Port Tampa Bay, coordinados con el itinerario del barco, con manifiestos detallados y tiempo de margen.",
+    bullets: [
+      "Del hotel al puerto, del aeropuerto al puerto, del puerto al hotel y otras rutas aprobadas",
+      "Para pasajeros de crucero, hoteles, operadores turísticos, DMC y coordinadores de grupos",
+      "Manifiestos detallados, tiempo de margen y un despachador responsable",
+      "Entrega documentada para reducir el riesgo en cada traspaso",
+    ],
+    audiences: ["Pasajeros de crucero", "Hoteles", "Operadores turísticos y DMC", "Coordinadores de grupos"],
+    prepare: ["Naviera, nombre del barco y fecha de salida", "Hora de embarque o desembarque", "Hotel o aeropuerto en el otro extremo", "Cantidad de maletas por pasajero o por grupo"],
+    steps: [
+      { t: "Datos del crucero", d: "Puerto, fecha y horario de embarque o desembarque, más el hotel o el aeropuerto." },
+      { t: "Manifiesto y margen", d: "Planificamos con un manifiesto detallado y tiempo extra para el tráfico de la terminal." },
+      { t: "Un solo contacto", d: "Un despachador responsable coordina horarios, reglas de la terminal y cambios de último momento." },
+      { t: "Entrega documentada", d: "Cada traslado termina con un traspaso documentado." },
+    ],
+    note: "El servicio está sujeto a la ruta, las reglas de la terminal, el acceso y el itinerario del barco.",
+    seoDescription: "Traslado de equipaje a puertos de cruceros en Florida: PortMiami, Port Everglades, Port Canaveral, Port Tampa Bay y más. Solicite una cotización.",
+  },
+  "luggage-storage": {
+    headline: "Almacenamiento de maletas entre itinerarios",
+    intro: "Resguardo temporal de equipaje cuando el check-out del hotel, el vuelo, el crucero o el siguiente traslado no coinciden con la hora de recogida o entrega. Un puente controlado entre itinerarios, disponible mediante cotización.",
+    bullets: [
+      "Resguardo temporal entre itinerarios",
+      "Se puede combinar con recogida y entrega posterior",
+      "Útil para viajeros, hoteles, grupos, eventos y coordinadores de viaje",
+      "Disponibilidad, duración, artículos restringidos, acceso y tarifas se confirman mediante cotización",
+    ],
+    audiences: ["Viajeros", "Hoteles", "Grupos y eventos", "Coordinadores de viaje"],
+    prepare: ["Fecha y hora de entrega de las maletas", "Fecha y hora en que deben salir", "Cantidad y tamaño de las piezas", "Si necesita recogida o entrega"],
+    steps: [
+      { t: "Reserva", d: "Indique fechas, horas y cantidad de piezas; confirmamos la disponibilidad." },
+      { t: "Ingreso", d: "Contamos las piezas, las etiquetamos y registramos su estado." },
+      { t: "Resguardo", d: "Cada pieza queda identificada con su ubicación dentro del almacén." },
+      { t: "Salida", d: "Entregamos solo a la persona autorizada, o la llevamos a su destino." },
+    ],
+    seoDescription: "Almacenamiento de maletas en Florida con recogida y entrega opcionales, cuando los horarios de hotel, vuelo o crucero no coinciden. Solicite una cotización.",
+  },
+  "sports-entertainment-events": {
+    headline: "Logística deportiva, de entretenimiento y eventos",
+    intro: "Transporte de equipaje, palos de golf, equipo deportivo, equipamiento de los equipos, equipo de producción y materiales de eventos aprobados, con carga en horarios exactos, preparación, coordinación de varios vehículos y entregas en el recinto.",
+    bullets: [
+      "Equipaje, palos de golf, equipo deportivo y de producción, y materiales de eventos",
+      "Para equipos visitantes, torneos, artistas, equipos de gira, recintos y organizadores",
+      "Carga en horario exacto, preparación, varios vehículos y revisión de piezas sobredimensionadas",
+      "Entregas en el recinto planificadas al minuto",
+    ],
+    audiences: ["Equipos visitantes", "Torneos", "Artistas y giras", "Recintos y organizadores"],
+    prepare: ["Nombre del evento o del equipo y fechas", "Lugares de carga y entrega", "Lista de equipo y piezas especiales", "Horarios de montaje y desmontaje"],
+    steps: [
+      { t: "Plan del programa", d: "Definimos vehículos, personal y horarios según el calendario del evento." },
+      { t: "Carga y preparación", d: "Cargamos en el horario acordado y preparamos las piezas por destino." },
+      { t: "Coordinación", d: "Varios vehículos trabajan con un solo despachador responsable." },
+      { t: "Entrega en recinto", d: "Entregamos en el muelle o punto acordado y documentamos el traspaso." },
+    ],
+    seoDescription: "Logística deportiva, de giras y eventos en Florida: equipaje, equipo y materiales con horarios exactos. Solicite una cotización personalizada.",
+  },
+  "courier-last-mile": {
+    headline: "Mensajería profesional y entregas de última milla",
+    intro: "Recogida y entrega programadas, por ruta, el mismo día cuando hay disponibilidad local, y urgentes, de artículos y documentos empresariales aprobados, con verificación del destinatario, actualizaciones de estado y prueba de entrega.",
+    bullets: [
+      "Entregas programadas, por ruta y urgentes, el mismo día cuando hay disponibilidad local",
+      "Ideal para hoteles, empresas de viajes, cuentas corporativas, organizadores de eventos y comercios",
+      "Rutas recurrentes, varias paradas, verificación del destinatario, actualizaciones y prueba de entrega",
+      "No entregamos comida ni catering. No aceptamos artículos prohibidos, peligrosos, ilegales o inseguros",
+    ],
+    audiences: ["Hoteles y empresas de viajes", "Cuentas corporativas", "Organizadores de eventos", "Comercios y clientes empresariales"],
+    prepare: ["Direcciones de recogida y entrega", "Descripción, cantidad y peso de los artículos", "Hora límite de entrega", "Si se trata de una ruta recurrente"],
+    steps: [
+      { t: "Solicitud", d: "Indique qué se envía, desde dónde, hacia dónde y para cuándo." },
+      { t: "Asignación", d: "Despacho asigna el vehículo adecuado y confirma el horario." },
+      { t: "Seguimiento", d: "Recibe actualizaciones de estado durante la entrega." },
+      { t: "Prueba de entrega", d: "Registramos el nombre del destinatario, la hora y la firma o foto aprobada." },
+    ],
+    seoDescription: "Mensajería profesional y entregas de última milla en Miami, Fort Lauderdale y Florida, con prueba de entrega. Solicite una cotización.",
+  },
+  "cargo-van-box-truck": {
+    headline: "Logística en furgoneta de carga y camión de caja",
+    intro: "Capacidad regional y entre ciudades con furgonetas de carga y camiones de caja de aproximadamente 15, 20 y 26 pies, asignados según el tamaño y los requisitos de cada trabajo aprobado.",
+    bullets: [
+      "Furgonetas de carga y camiones de caja de aproximadamente 15, 20 y 26 pies",
+      "Mercancía en pallets, equipo, materiales de eventos, equipaje a granel, rutas comerciales y proyectos especiales",
+      "El precio puede incluir camión o ruta, personal, millas, combustible, tiempo de espera, acceso, horas extra, pallets o almacenamiento",
+      "No ofrecemos mudanzas residenciales",
+    ],
+    audiences: ["Empresas comerciales", "Productores de eventos", "Grupos hoteleros", "Proyectos logísticos especiales"],
+    prepare: ["Descripción de la carga, cantidad de pallets o piezas", "Medidas y peso aproximados", "Muelle de carga, escaleras o restricciones de acceso", "Personal necesario y paradas"],
+    steps: [
+      { t: "Detalles de la carga", d: "Volumen, peso y accesos para elegir el vehículo correcto." },
+      { t: "Vehículo y equipo", d: "Asignamos furgoneta o camión y el personal necesario." },
+      { t: "Carga y ruta", d: "Cargamos de forma segura y seguimos la ruta acordada." },
+      { t: "Entrega documentada", d: "Confirmamos el conteo y registramos la entrega." },
+    ],
+    seoDescription: "Furgonetas de carga y camiones de caja de 15, 20 y 26 pies en Florida para pallets, equipo, eventos y rutas comerciales. Solicite una cotización.",
   },
 };

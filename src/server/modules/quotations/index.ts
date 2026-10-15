@@ -16,7 +16,7 @@ import { priceLocal } from "../../engines/pricing/local";
 import { priceStorage } from "../../engines/pricing/storage";
 import type { Prisma } from "../../generated/prisma/client";
 import { asyncHandler, HttpError } from "../../lib/errors";
-import { LUGGAGE_CATEGORY_LABELS } from "@/lib/quote-schema";
+import { LUGGAGE_CATEGORY_LABELS, SERVICE_LABELS } from "@/lib/quote-schema";
 import { markets } from "@/content/site";
 import { maps } from "../../providers/registry";
 import { getActiveRules, getSetting } from "../../settings";
@@ -36,6 +36,9 @@ import {
   sendQuotation,
   updateQuotation,
 } from "./service";
+
+/** Customer-facing service name (never the internal code). */
+const serviceName = (s: string) => SERVICE_LABELS[s as keyof typeof SERVICE_LABELS] ?? s.replace(/-/g, " ");
 
 export const adminRouter = Router();
 export const publicRouter = Router();
@@ -143,7 +146,7 @@ adminRouter.get(
       customer: { id: qr.customer.id, name: qr.customer.name, email: qr.customer.email },
       quoteRequest: { id: qr.id, reference: qr.reference, serviceType: qr.serviceType, route: qr.route, routeReasons: qr.routeReasons, notes: p.notes ?? "", specialHandling: p.specialHandling ?? "", accessNotes: p.accessNotes ?? "" },
       details: detailsFromQuoteRequest(qr),
-      title: `${qr.serviceType.replace(/-/g, " ").replace(/^\w/, (c) => c.toUpperCase())} · ${new Date(p.serviceDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      title: `${serviceName(qr.serviceType)} · ${new Date(p.serviceDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
     });
   }),
 );

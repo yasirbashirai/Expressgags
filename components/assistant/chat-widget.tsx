@@ -70,7 +70,7 @@ export function ChatWidget() {
 
   if (!enabled) return null;
   // The quote wizard has a sticky action bar on phones: lift the launcher above it there
-  const onQuote = pathname?.startsWith("/request-a-quote");
+  const onQuote = pathname?.startsWith("/request-a-quote") || pathname?.startsWith("/es/solicitar-cotizacion");
 
   return (
     <>

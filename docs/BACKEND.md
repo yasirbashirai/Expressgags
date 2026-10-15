@@ -15,7 +15,7 @@ Background dev DB: `npx prisma dev -n express-bags -d` · stop: `npx prisma dev 
 ## Structure
 | Path | What |
 |---|---|
-| `prisma/schema.prisma` | Data model: users/roles, customers, companies, quote requests (+notes, timeline), orders & pieces (9-step status, piece IDs `EB-…-01`, barcode/RFID field), markets, zones (sub-zones), recognized locations, vehicle classes, settings, versioned pricing rules, notable-project permissions, careers, messages, uploads, email log, audit log |
+| `prisma/schema/*.prisma` | Data model: users/roles, customers, companies, quote requests (+notes, timeline), orders & pieces (9-step status, piece IDs `EB-…-01`, barcode/RFID field), markets, zones (sub-zones), recognized locations, vehicle classes, settings, versioned pricing rules, notable-project permissions, careers, messages, uploads, email log, audit log |
 | `src/server/app.ts` / `index.ts` | Express app (helmet, CORS allow-list, rate limits, JSON errors) / server start |
 | `src/server/routes/public.ts` | `POST /v1/quotes`, `/v1/uploads`, `/v1/careers`, `/v1/contact`, `GET /v1/health`, `/v1/public-config` |
 | `src/server/routes/admin.ts` | `/v1/admin/*` — auth, dashboard, quotes (list/filters/detail/status/notes/CSV/pricing preview), settings, pricing rules, notable-project permissions, careers, messages, private upload download, markets/zones |
@@ -34,5 +34,7 @@ OWNER: everything (settings, pricing rules, permissions, zones). STAFF: quotes, 
 ## Pricing safety
 `features.pricingEnabled` is **false** by default and pricing is never returned publicly. Rule defaults in `engines/config.ts` are placeholders, not Express Bags' prices. Every rule save creates a new `PricingRuleSet` version.
 
-## Deploy (proposal)
-API on Render (Node 22, `npm run api:start`, set env vars, run `npx prisma migrate deploy` on release). DB on Neon. Website on Vercel with `NEXT_PUBLIC_API_URL`. In production the session cookie is `SameSite=None; Secure` (site and API on different domains).
+## Deploy & operate
+See `DEPLOY.md` (Render API + jobs worker, Vercel site, Neon, GoDaddy DNS, Microsoft 365 email, provider accounts), `ENV.md` (every variable) and `OPERATIONS.md` (health, jobs, backups/restore test, rollback, feature gates).
+Useful commands: `npm run jobs:once` / `jobs:worker` / `jobs:list`, `npm run seed:demo` / `seed:demo:clean` (never in production), `GET /v1/ready`.
+Schema files live in `prisma/schema/*.prisma`; migrations in `prisma/migrations/` (verified to apply cleanly to an empty database).

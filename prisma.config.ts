@@ -16,6 +16,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Prisma CLI (migrate deploy) uses the DIRECT connection when given (Neon: the non "-pooler" host);
+    // the running app always uses DATABASE_URL (pooled) through @prisma/adapter-pg.
+    url: process.env["DIRECT_DATABASE_URL"] || process.env["DATABASE_URL"],
   },
 });

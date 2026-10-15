@@ -10,6 +10,10 @@ import { HttpError } from "../../lib/errors";
 import { publicToken } from "../../lib/reference";
 import { syncInvoice } from "./accounting";
 import { fmtUsd, invoiceNumber, nextSequence, webUrl } from "./money";
+import { SERVICE_LABELS } from "@/lib/quote-schema";
+
+/** Customer-facing service name (never the internal code). */
+const serviceName = (s: string) => SERVICE_LABELS[s as keyof typeof SERVICE_LABELS] ?? s.replace(/-/g, " ");
 
 /** Due at the end of the due day (local server time). */
 const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
@@ -47,7 +51,7 @@ export async function createInvoice(input: {
   const lines: { description: string; quantity: number; unitCents: number; totalCents: number; orderId?: string }[] = [];
   for (const o of orders) {
     const date = o.serviceDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    lines.push({ description: `Order ${o.reference} · ${o.serviceType.replace(/-/g, " ")} · ${date}${o.guestName ? ` · Guest: ${o.guestName}` : ""}`, quantity: 1, unitCents: o.retailCents!, totalCents: o.retailCents!, orderId: o.id });
+    lines.push({ description: `Order ${o.reference} · ${serviceName(o.serviceType)} · ${date}${o.guestName ? ` · Guest: ${o.guestName}` : ""}`, quantity: 1, unitCents: o.retailCents!, totalCents: o.retailCents!, orderId: o.id });
     const deposits = o.payments.filter((p) => p.status === "SUCCEEDED" && p.kind === "DEPOSIT" && !p.invoiceId).reduce((s, p) => s + p.amountCents, 0);
     if (deposits > 0) lines.push({ description: `Less deposit received for ${o.reference}`, quantity: 1, unitCents: -deposits, totalCents: -deposits, orderId: o.id });
   }

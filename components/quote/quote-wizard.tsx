@@ -25,26 +25,18 @@ import {
 } from "./flow";
 import { fieldId } from "./fields";
 import { ContactStep, GroupStep, ItemsStep, ReviewStep, RouteStep, ServiceStep, StorageStep, TimingStep } from "./sections";
-import { SERVICE_CARDS } from "./options";
 import { InstantPrice, type InstantFlags } from "./instant-price";
+import { QuoteLangProvider } from "./i18n";
+import { parseProtectionPlans, type ProtectionPlans } from "./wizard-extras";
+import { QUOTE_STRINGS, isLang, localizeErrors, type Lang } from "@/content/i18n/quote";
 
 const STORAGE_KEY = "eb-quote-draft-v1";
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(/\/$/, "");
 
 type Status = { kind: "idle" } | { kind: "sending" } | { kind: "error"; message: string } | { kind: "done"; result: QuoteSubmitResponse };
 
-const STEP_INTRO: Partial<Record<StepId, string>> = {
-  service: "Choose the option that fits best. You can change it at any time.",
-  route: "Where should we collect, and where should everything go?",
-  storage: "Tell us when the bags arrive and when they need to leave storage.",
-  group: "A few details about the program so we can plan vehicles, labor and timing.",
-  timing: "When do you need us?",
-  items: "Count and size help us assign the right vehicle and team.",
-  contact: "Where should we send your written quotation?",
-  review: "Check the details, confirm, and send. No payment is taken.",
-};
 
-export function QuoteWizard() {
+export function QuoteWizard({ defaultLang }: { defaultLang?: Lang } = {}) {
   const params = useSearchParams();
   const [draft, setDraft] = useState<QuoteDraft>(emptyDraft);
   const [stepIndex, setStepIndex] = useState(0);
@@ -53,6 +45,11 @@ export function QuoteWizard() {
   const [hydrated, setHydrated] = useState(false);
   // Instant pricing flags (public booleans only). null = quote-only experience.
   const [instantFlags, setInstantFlags] = useState<InstantFlags | null>(null);
+  // Protection plans (null = module not live → picker hidden entirely)
+  const [protectionPlans, setProtectionPlans] = useState<ProtectionPlans | null>(null);
+  // Wizard language: ?lang=, else the page language (/es/solicitar-cotizacion → Spanish), else the saved draft
+  const lang: Lang = draft.language;
+  const t = QUOTE_STRINGS[lang];
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -71,6 +68,10 @@ export function QuoteWizard() {
       restored = null;
     }
     let next = restored ?? emptyDraft();
+    // Language: ?lang= wins, then the page's language (Spanish page → Spanish), then the saved draft
+    const qLang = params.get("lang");
+    if (isLang(qLang)) next = { ...next, language: qLang };
+    else if (defaultLang) next = { ...next, language: defaultLang };
     const type = params.get("type");
     const market = params.get("market");
     if (isMarket(market) && !next.pickup.market) next = { ...next, pickup: { ...next.pickup, market }, delivery: { ...next.delivery, market: next.delivery.market || market }, storageMarket: next.storageMarket || market };
@@ -95,7 +96,7 @@ export function QuoteWizard() {
       .then((body) => {
         const revived = body?.draft ? reviveDraft(body.draft) : null;
         if (revived) {
-          setDraft(revived);
+          setDraft((d) => ({ ...revived, language: d.language }));
           setStepIndex(revived.serviceType ? 1 : 0);
         }
       })
@@ -112,7 +113,7 @@ export function QuoteWizard() {
       .then((body) => {
         const revived = body?.draft ? reviveDraft(body.draft) : null;
         if (revived) {
-          setDraft(revived);
+          setDraft((d) => ({ ...revived, language: revived.language === "es" ? "es" : d.language }));
           setStepIndex(revived.serviceType ? 1 : 0);
         }
       })
@@ -121,14 +122,21 @@ export function QuoteWizard() {
   }, []);
 
   // Owner-approved instant pricing? (never blocks the wizard; failures keep it quote-only)
+  // Public feature flags (booleans only): instant pricing, carrier shipping, and whether optional protection is live.
+  // Protection plans are fetched only when live, so the page never logs a 404 while the module is off.
   useEffect(() => {
     fetch(`${API_URL}/v1/public-config`)
       .then((r) => (r.ok ? r.json() : null))
       .then((c) => {
         if (c?.instantBookingEnabled || c?.carrierShippingEnabled) setInstantFlags({ instantBookingEnabled: !!c.instantBookingEnabled, carrierShippingEnabled: !!c.carrierShippingEnabled });
+        if (!c?.protectionLive) return setProtectionPlans(null);
+        return fetch(`${API_URL}/v1/protection/plans`).then(async (r) => setProtectionPlans(parseProtectionPlans(r.status, await r.json().catch(() => null))));
       })
-      .catch(() => undefined);
+      .catch(() => setProtectionPlans(null));
   }, []);
+
+  // Switching language keeps everything already entered; the wizard container carries the matching lang attribute
+  const setLang = (l: Lang) => setDraft((d) => ({ ...d, language: l }));
 
   // Persist draft
   useEffect(() => {
@@ -233,38 +241,50 @@ export function QuoteWizard() {
       // Conversion hook for consented analytics/ads + attribution (components/marketing/consent-and-tags.tsx)
       window.dispatchEvent(new CustomEvent("eb:quote-submitted", { detail: { reference: json.reference, serviceType: parsed.data.serviceType } }));
     } catch {
-      setStatus({ kind: "error", message: "We couldn't send your request just now. Your details are saved on this device." });
+      setStatus({ kind: "error", message: QUOTE_STRINGS[draft.language].sendError });
     }
   }
 
   function startOver() {
-    setDraft(emptyDraft());
+    setDraft((d) => ({ ...emptyDraft(), language: d.language }));
     setStepIndex(0);
     setErrors({});
     setStatus({ kind: "idle" });
   }
 
-  if (status.kind === "done") return <SuccessPanel result={status.result} email={draft.contact.email} onStartOver={startOver} headingRef={headingRef} />;
+  if (status.kind === "done")
+    return (
+      <QuoteLangProvider value={lang}>
+        <div lang={lang === "es" ? "es-US" : "en"}>
+          <SuccessPanel result={status.result} email={draft.contact.email} onStartOver={startOver} headingRef={headingRef} lang={lang} />
+        </div>
+      </QuoteLangProvider>
+    );
 
-  const errorCount = Object.keys(errors).length;
-  const service = SERVICE_CARDS.find((c) => c.type === draft.serviceType);
+  const shown = localizeErrors(errors, lang);
+  const errorCount = Object.keys(shown).length;
+  const service = draft.serviceType ? t.services[draft.serviceType] : null;
+  const stepKey = step.id === "timing" && draft.serviceType === "storage" ? "timingStorage" : step.id;
+  const stepText = t.steps[stepKey];
   const progress = Math.round(((stepIndex + 1) / totalSteps) * 100);
 
   return (
-    <div className="card overflow-hidden">
+    <QuoteLangProvider value={lang}>
+    <div className="card overflow-hidden" lang={lang === "es" ? "es-US" : "en"} data-testid="quote-wizard" data-lang={lang}>
       {/* Progress */}
       <div className="border-b border-line bg-white px-4 pb-4 pt-5 sm:px-8">
         <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wider text-muted">
-          <span>
-            Step {stepIndex + 1} of {totalSteps}
+          <span>{t.stepOf(stepIndex + 1, totalSteps)}</span>
+          <span className="flex min-w-0 items-center gap-3">
+            {service && <span className="hidden truncate text-navy sm:inline">{service.title}</span>}
+            <LangToggle lang={lang} onChange={setLang} label={t.switchLabel} />
           </span>
-          {service && <span className="truncate text-navy">{service.title}</span>}
         </div>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-navy-50" role="progressbar" aria-valuemin={1} aria-valuemax={totalSteps} aria-valuenow={stepIndex + 1} aria-label="Quote progress">
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-navy-50" role="progressbar" aria-valuemin={1} aria-valuemax={totalSteps} aria-valuenow={stepIndex + 1} aria-label={t.progressLabel}>
           <div className="h-full rounded-full bg-orange transition-[width] duration-500" style={{ width: `${progress}%` }} />
         </div>
         {draft.serviceType && (
-          <ol className="mt-4 hidden flex-wrap gap-2 md:flex" aria-label="Steps">
+          <ol className="mt-4 hidden flex-wrap gap-2 md:flex" aria-label={t.stepsLabel}>
             {steps.map((s, i) => {
               const done = i < stepIndex;
               const current = i === stepIndex;
@@ -282,7 +302,7 @@ export function QuoteWizard() {
                     <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${current ? "bg-orange" : done ? "bg-navy text-white" : "bg-white"}`}>
                       {done ? <Check className="h-2.5 w-2.5" aria-hidden strokeWidth={3} /> : i + 1}
                     </span>
-                    {s.short}
+                    {t.steps[s.id === "timing" && draft.serviceType === "storage" ? "timingStorage" : s.id].short}
                   </button>
                 </li>
               );
@@ -301,14 +321,14 @@ export function QuoteWizard() {
       >
         <div className="px-4 py-6 sm:px-8 sm:py-8">
           <h2 ref={headingRef} tabIndex={-1} className="scroll-mt-28 text-2xl font-bold outline-none sm:text-3xl">
-            {step.title}
+            {stepText.title}
           </h2>
-          {STEP_INTRO[step.id] && <p className="mt-2 text-slate-ink">{STEP_INTRO[step.id]}</p>}
+          {stepText.intro && <p className="mt-2 text-slate-ink">{stepText.intro}</p>}
 
           {errorCount > 0 && (
             <div role="alert" className="mt-5 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              {errorCount === 1 ? "One field needs your attention." : `${errorCount} fields need your attention.`}
+              {t.attention(errorCount)}
             </div>
           )}
 
@@ -316,25 +336,25 @@ export function QuoteWizard() {
             {!hydrated ? (
               <div className="flex h-40 items-center justify-center text-muted">
                 <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-                <span className="sr-only">Loading</span>
+                <span className="sr-only">{t.loading}</span>
               </div>
             ) : step.id === "service" ? (
-              <ServiceStep selected={draft.serviceType} onPick={pickService} error={errors.serviceType} />
+              <ServiceStep selected={draft.serviceType} onPick={pickService} error={shown.serviceType} />
             ) : step.id === "route" ? (
-              <RouteStep draft={draft} update={update} errors={errors} />
+              <RouteStep draft={draft} update={update} errors={shown} />
             ) : step.id === "storage" ? (
-              <StorageStep draft={draft} update={update} errors={errors} />
+              <StorageStep draft={draft} update={update} errors={shown} apiUrl={API_URL} />
             ) : step.id === "group" ? (
-              <GroupStep draft={draft} update={update} errors={errors} />
+              <GroupStep draft={draft} update={update} errors={shown} />
             ) : step.id === "timing" ? (
-              <TimingStep draft={draft} update={update} errors={errors} step={step} />
+              <TimingStep draft={draft} update={update} errors={shown} step={step} />
             ) : step.id === "items" ? (
-              <ItemsStep draft={draft} update={update} errors={errors} />
+              <ItemsStep draft={draft} update={update} errors={shown} />
             ) : step.id === "contact" ? (
-              <ContactStep draft={draft} update={update} errors={errors} apiUrl={API_URL} />
+              <ContactStep draft={draft} update={update} errors={shown} apiUrl={API_URL} />
             ) : (
               <>
-                <ReviewStep draft={draft} update={update} errors={errors} steps={steps} goTo={goTo} />
+                <ReviewStep draft={draft} update={update} errors={shown} steps={steps} goTo={goTo} protectionPlans={protectionPlans} />
                 <InstantPrice draft={draft} apiUrl={API_URL} flags={instantFlags} />
               </>
             )}
@@ -344,7 +364,7 @@ export function QuoteWizard() {
             <div role="alert" className="mt-6 rounded-2xl border border-orange/40 bg-orange-50 p-4 text-sm text-charcoal">
               <p className="font-semibold text-navy">{status.message}</p>
               <p className="mt-1">
-                Please try again, or call our office at{" "}
+                {t.sendErrorHelp}{" "}
                 <a href={contact.phoneHref} className="font-semibold text-orange-700 underline">
                   {contact.phoneDisplay}
                 </a>
@@ -358,10 +378,10 @@ export function QuoteWizard() {
         <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 border-t border-line bg-white/95 px-4 py-3 backdrop-blur sm:static sm:px-8 sm:py-5">
           {stepIndex > 0 ? (
             <button type="button" onClick={back} className="btn-ghost !px-4 sm:!px-6">
-              <ChevronLeft className="h-4 w-4" aria-hidden /> Back
+              <ChevronLeft className="h-4 w-4" aria-hidden /> {t.back}
             </button>
           ) : (
-            <span className="text-xs text-muted">No payment needed to request a quote</span>
+            <span className="text-xs text-muted">{t.noPayment}</span>
           )}
           <button
             type="submit"
@@ -370,19 +390,42 @@ export function QuoteWizard() {
           >
             {status.kind === "sending" ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Sending…
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {t.sending}
               </>
             ) : isLast ? (
-              status.kind === "error" ? "Try again" : "Send quote request"
+              status.kind === "error" ? t.tryAgain : t.send
             ) : (
               <>
-                Continue <ChevronRight className="h-4 w-4" aria-hidden />
+                {t.continue} <ChevronRight className="h-4 w-4" aria-hidden />
               </>
             )}
           </button>
         </div>
       </form>
     </div>
+    </QuoteLangProvider>
+  );
+}
+
+/** EN / ES switch in the wizard header. Changing language keeps everything already entered. */
+function LangToggle({ lang, onChange, label }: { lang: Lang; onChange: (l: Lang) => void; label: string }) {
+  return (
+    <span role="group" aria-label={label} className="inline-flex shrink-0 overflow-hidden rounded-full border border-line normal-case tracking-normal">
+      {(["en", "es"] as const).map((l) => (
+        <button
+          key={l}
+          type="button"
+          lang={l === "es" ? "es-US" : "en"}
+          aria-pressed={lang === l}
+          onClick={() => onChange(l)}
+          data-testid={`lang-${l}`}
+          className={`px-2.5 py-1 text-xs font-semibold transition ${lang === l ? "bg-navy text-white" : "bg-white text-navy hover:bg-navy-50"}`}
+        >
+          {l === "en" ? "EN" : "ES"}
+          <span className="sr-only">{l === "en" ? " English" : " Español"}</span>
+        </button>
+      ))}
+    </span>
   );
 }
 
@@ -391,41 +434,35 @@ function SuccessPanel({
   email,
   onStartOver,
   headingRef,
+  lang,
 }: {
   result: QuoteSubmitResponse;
   email: string;
   onStartOver: () => void;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
+  lang: Lang;
 }) {
+  const t = QUOTE_STRINGS[lang].success;
   const custom = result.route === "custom-quote" || result.route === "special-route";
   return (
     <div className="card overflow-hidden">
       <div className="bg-navy px-6 py-10 text-white sm:px-10">
         <CheckCircle2 className="h-12 w-12 text-orange" aria-hidden />
         <h2 ref={headingRef} tabIndex={-1} className="mt-4 text-3xl font-bold text-white outline-none">
-          Request received
+          {t.title}
         </h2>
-        <p className="mt-2 text-white/80">{result.message || "Thank you. Our dispatch team is reviewing your request."}</p>
+        <p className="mt-2 text-white/80">{result.message || t.defaultMessage}</p>
         <div className="mt-6 inline-flex flex-col rounded-2xl border border-white/15 bg-white/5 px-5 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-white/60">Your reference</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-white/60">{t.reference}</span>
           <span className="font-display text-2xl font-bold tracking-wide" data-testid="quote-reference">
             {result.reference}
           </span>
         </div>
       </div>
       <div className="px-6 py-8 sm:px-10">
-        <h3 className="text-lg font-bold">What happens next</h3>
+        <h3 className="text-lg font-bold">{t.next}</h3>
         <ol className="mt-4 grid gap-4">
-          {[
-            { t: "Dispatch reviews your request", d: "We check the route, vehicle, labor, timing and any airport, port or venue access requirements." },
-            {
-              t: custom ? "We plan your program" : "You receive a written quotation",
-              d: custom
-                ? "A coordinator may contact you to confirm manifests, locations and timings, then sends a written quotation."
-                : `Your quote, with the included scope and assumptions, is sent${email ? ` to ${email}` : ""}.`,
-            },
-            { t: "Approve and book", d: "Once you approve, we confirm the booking and assign your team. Same-day service is subject to capacity and dispatch confirmation." },
-          ].map((s, i) => (
+          {[t.step1, custom ? t.step2Custom : { t: t.step2.t, d: t.step2.d(email) }, t.step3].map((s, i) => (
             <li key={s.t} className="flex gap-4">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-50 font-display font-bold text-orange-700">{i + 1}</span>
               <span>
@@ -440,7 +477,7 @@ function SuccessPanel({
             <Phone className="h-4 w-4" aria-hidden /> {contact.phoneDisplay}
           </a>
           <button type="button" onClick={onStartOver} className="btn-navy">
-            Start another request
+            {t.another}
           </button>
         </div>
       </div>

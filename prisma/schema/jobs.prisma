@@ -1,0 +1,18 @@
+// Background job runner state: one row per scheduled job. Doubles as the cross-worker lock
+// (lease: a worker owns a job while lockedUntil > now) and as the operations status board.
+
+model JobState {
+  name           String    @id
+  lockedBy       String?
+  lockedUntil    DateTime?
+  lastStartedAt  DateTime?
+  lastFinishedAt DateTime?
+  /// OK | ERROR | SKIPPED
+  lastStatus     String?
+  lastError      String?
+  lastDurationMs Int?
+  lastResult     Json?
+  runCount       Int       @default(0)
+  errorCount     Int       @default(0)
+  updatedAt      DateTime  @updatedAt
+}

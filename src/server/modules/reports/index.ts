@@ -6,6 +6,7 @@
  */
 import { Router } from "express";
 import { z } from "zod";
+import { csvSafe } from "../../lib/security";
 import { requireAuth, requireRole } from "../../auth";
 import { asyncHandler } from "../../lib/errors";
 import type { PlatformModule } from "../types";
@@ -53,7 +54,7 @@ adminRouter.get(
     const cell = (v: unknown, k: string) => {
       if (v == null) return "";
       const s = /Cents$/.test(k) ? (Number(v) / 100).toFixed(2) : String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      return csvSafe(s); // neutralizes spreadsheet formula injection (customer names, routes)
     };
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="express-bags-${table}.csv"`);

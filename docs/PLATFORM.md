@@ -14,6 +14,14 @@ The 07 completed form + 06 history + 03 master requirements are the source of tr
 | Admin (office) | `src/app/admin/**` | staff cookie `eb_admin`, roles OWNER/STAFF/DISPATCHER/ACCOUNTING | `/v1/admin/*` |
 | Driver app (PWA, phone-first) | `src/app/driver/**` (own layout, no site chrome) | staff cookie, role DRIVER | `/v1/driver/*` |
 
+### Root layouts and language
+There is no `src/app/layout.tsx`. Each area has its own root layout so every page ships the right `<html lang>`
+and stays statically rendered: `(site)` English public site, `(es)` Spanish public pages (`/es/**`, `lang="es-US"`),
+`admin`, `driver`. They share `components/layout/root-document.tsx` (fonts, globals.css, base metadata) and
+`components/layout/public-chrome.tsx` (header/footer). Unmatched URLs render `src/app/global-not-found.tsx`
+(`experimental.globalNotFound`). Quote wizard copy lives in `src/content/i18n/quote.ts` (en + es, same shape);
+the Spanish quote page is `/es/solicitar-cotizacion`.
+
 ## Backend modules
 Each module owns `src/server/modules/<name>/` (index.ts exports `platformModule`, already registered in
 `src/server/modules/index.ts` and mounted by `app.ts`):

@@ -85,7 +85,8 @@ test("no horizontal scroll at 390px and the mobile action bar is present", async
 test("Spanish pages declare their language and hreflang alternates", async ({ page }) => {
   for (const [es, en] of [["/es", "/"], ["/es/servicios", "/services"], ["/es/areas/miami", "/service-areas/miami"]]) {
     await page.goto(es);
-    await expect(page.locator('main [lang="es-US"]').first()).toBeAttached();
+    // The (es) root layout sets the document language itself (no wrapper div needed)
+    await expect(page.locator("html")).toHaveAttribute("lang", "es-US");
     await expect(page.locator('link[rel="alternate"][hreflang="en-US"]')).toHaveAttribute("href", en === "/" ? /express-bags\.com\/?$/ : new RegExp(`${en}$`));
     await expect(page.locator('link[rel="alternate"][hreflang="es-US"]')).toHaveAttribute("href", new RegExp(`${es}$`));
     await expect(page.getByRole("link", { name: /Solicitar cotización/ }).first()).toBeVisible();

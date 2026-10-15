@@ -21,7 +21,8 @@ export async function receiveCmsFile(req: Request, opts: { kind: "cms-image" | "
   if (opts.imagesOnly && !IMAGE_TYPES.includes(file.type)) {
     throw new HttpError(415, "Website images must be JPG, PNG or WEBP.");
   }
-  const id = await storeUpload(file);
+  // Public website media: strip EXIF/GPS metadata from images before storing
+  const id = await storeUpload(file, { stripImageMetadata: opts.kind === "cms-image" });
   await prisma.upload.update({ where: { id }, data: { kind: opts.kind, ownerType: CMS_OWNER, uploadedBy: req.user?.email ?? null, isPublic: false } });
   const fields: Record<string, string> = {};
   for (const [k, v] of form.entries()) if (typeof v === "string") fields[k] = v;

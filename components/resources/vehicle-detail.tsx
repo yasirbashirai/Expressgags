@@ -112,7 +112,7 @@ export function VehicleDetail({ id }: { id: string }) {
                   <Item label="Insurance"><ExpiryBadge date={v.insuranceExpiresAt} /></Item>
                   <Item label="Inspection"><ExpiryBadge date={v.inspectionExpiresAt} /></Item>
                   <Item label="Maintenance spend">{money(spend)}</Item>
-                  {v.notes && <div className="sm:col-span-2"><Item label="Notes"><span className="whitespace-pre-line">{v.notes}</span></Item></div>}
+                  {v.notes && <Item label="Notes" className="sm:col-span-2"><span className="whitespace-pre-line">{v.notes}</span></Item>}
                 </dl>
               </div>
             </Panel>
@@ -179,8 +179,8 @@ export function VehicleDetail({ id }: { id: string }) {
   );
 }
 
-function Item({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><dt className="text-xs uppercase tracking-wider text-muted">{label}</dt><dd className="mt-0.5 text-charcoal">{children}</dd></div>;
+function Item({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+  return <div className={className}><dt className="text-xs uppercase tracking-wider text-muted">{label}</dt><dd className="mt-0.5 text-charcoal">{children}</dd></div>;
 }
 
 function EditVehicle({ vehicle: v, onDone }: { vehicle: Vehicle; onDone: () => void }) {

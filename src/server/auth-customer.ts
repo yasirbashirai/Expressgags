@@ -3,6 +3,7 @@
  * "eb_customer" cookie. Account roles: INDIVIDUAL | COMPANY_ADMIN | COMPANY_USER | CONCIERGE.
  */
 import type { NextFunction, Request, Response } from "express";
+import { createHash } from "node:crypto";
 import jwt from "jsonwebtoken";
 import { prisma } from "./db";
 import { env, isProd } from "./lib/env";
@@ -24,8 +25,14 @@ const secret = () => {
   return env.jwtSecret + ":customer"; // distinct signing domain from staff sessions
 };
 
-export function issueCustomerSession(res: Response, c: { id: string }) {
-  const token = jwt.sign({ sub: c.id, typ: "customer" }, secret(), { expiresIn: TTL_SECONDS });
+/**
+ * Password fingerprint bound into the session: changing or resetting the password changes the hash,
+ * which invalidates every other session for that customer (no schema change needed).
+ */
+const passwordFingerprint = (hash: string | null | undefined) => (hash ? createHash("sha256").update(hash).digest("base64url").slice(0, 16) : "none");
+
+export function issueCustomerSession(res: Response, c: { id: string; passwordHash?: string | null }) {
+  const token = jwt.sign({ sub: c.id, typ: "customer", pv: passwordFingerprint(c.passwordHash) }, secret(), { expiresIn: TTL_SECONDS });
   res.cookie(CUSTOMER_COOKIE, token, { httpOnly: true, secure: isProd, sameSite: isProd ? "none" : "lax", maxAge: TTL_SECONDS * 1000, path: "/" });
 }
 
@@ -37,10 +44,12 @@ async function load(req: Request): Promise<AuthCustomer | null> {
   const token = req.cookies?.[CUSTOMER_COOKIE];
   if (!token) return null;
   try {
-    const p = jwt.verify(token, secret()) as { sub: string; typ: string };
+    const p = jwt.verify(token, secret()) as { sub: string; typ: string; pv?: string };
     if (p.typ !== "customer") return null;
     const c = await prisma.customer.findUnique({ where: { id: p.sub } });
     if (!c || !c.passwordHash) return null;
+    // Session must belong to the CURRENT password (old sessions die after a password change/reset)
+    if (p.pv ? p.pv !== passwordFingerprint(c.passwordHash) : isProd) return null;
     return { id: c.id, email: c.email, name: c.name, accountRole: c.accountRole, companyId: c.companyId };
   } catch {
     return null;

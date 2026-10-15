@@ -22,7 +22,11 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const s = services.find((x) => x.slug === slug);
   if (!s) return {};
-  return pageMeta({ title: `${s.name} in Florida`, description: `${s.short} ${s.intro}`.slice(0, 158), path: `/services/${s.slug}` });
+  const path = `/services/${s.slug}`;
+  return {
+    ...pageMeta({ title: `${s.name} in Florida`, description: `${s.short} ${s.intro}`.slice(0, 158), path }),
+    alternates: { canonical: path, languages: { "en-US": path, "es-US": `/es/servicios/${s.slug}` } },
+  };
 }
 
 export default async function ServicePage({ params }: Props) {

@@ -11,8 +11,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const hasDb = !!process.env.DATABASE_URL || (() => { try { process.loadEnvFile(".env"); return !!process.env.DATABASE_URL; } catch { return false; } })();
 
-// 1×1 transparent PNG
-const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAwS2OUAAAAABJRU5ErkJggg==", "base64");
+// 2×2 navy PNG (a genuinely decodable image: public CMS media is re-encoded to strip EXIF metadata)
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEElEQVQImWNg0Ij4D8YwBgAvlAX9yIWCzwAAAABJRU5ErkJggg==", "base64");
 
 describe.skipIf(!hasDb)("cms module", async () => {
   // Capture revalidation calls the API makes to the website

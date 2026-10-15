@@ -98,7 +98,7 @@ export function OrdersList() {
           <button key={t.label} role="tab" aria-selected={status === t.value} onClick={() => setFilter("status", t.value)}
             className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition ${status === t.value ? "bg-navy text-white" : "text-slate-ink hover:bg-cloud"}`}>
             {t.label}
-            {data && /^[A-Z_]+$/.test(t.value) && <span className="ml-1.5 opacity-70">{data.statusCounts[t.value] ?? 0}</span>}
+            {data && /^[A-Z_]+$/.test(t.value) && <span className="ml-1.5 font-normal">{data.statusCounts[t.value] ?? 0}</span>}
           </button>
         ))}
       </div>

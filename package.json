@@ -19,7 +19,12 @@
     "postinstall": "prisma generate",
     "api:start": "tsx src/server/index.ts",
     "db:sync": "node scripts/db-sync.mjs",
-    "reminders": "tsx scripts/run-reminders.ts"
+    "reminders": "tsx scripts/run-reminders.ts",
+    "seed:demo": "tsx prisma/seed-demo/index.ts",
+    "seed:demo:clean": "tsx prisma/seed-demo/index.ts --clean",
+    "jobs:once": "tsx scripts/jobs.ts",
+    "jobs:worker": "tsx scripts/jobs.ts --worker",
+    "jobs:list": "tsx scripts/jobs.ts --list"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",

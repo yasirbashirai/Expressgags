@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 const NO = ["Mudanzas residenciales o locales", "Entrega de comida o catering", "Artículos ilegales, peligrosos, prohibidos o mal embalados", "Artículos prohibidos por aerolíneas, TSA, aeropuertos, puertos o la ley"];
 
-/** Spanish services overview. Detailed service pages are in English for now. */
+/** Spanish services overview; each card links to its Spanish detail page (/es/servicios/[slug]). */
 export default function EsServicesPage() {
   return (
     <>

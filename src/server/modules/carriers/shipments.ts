@@ -10,6 +10,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { OrderStatus, Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../db";
 import { on } from "../../lib/events";
+import { fetchProviderFile } from "../../lib/security";
 import { HttpError } from "../../lib/errors";
 import { storeUpload } from "../../lib/multipart";
 import { carriers } from "../../providers/registry";
@@ -53,10 +54,10 @@ async function storeLabel(labelUrl: string, trackingNumber: string, carrier: str
   let type = "application/pdf";
   let ext = "pdf";
   if (/^https?:\/\//.test(labelUrl)) {
-    const res = await fetch(labelUrl);
-    if (!res.ok) throw new HttpError(502, "The carrier label could not be downloaded. Try again.");
-    bytes = new Uint8Array(await res.arrayBuffer());
-    type = res.headers.get("content-type")?.split(";")[0] || "application/pdf";
+    // SSRF guard: only https label files hosted by EasyPost (lib/security.ts)
+    const file = await fetchProviderFile(labelUrl, ["easypost.com", /^easypost-files\.s3[.-][a-z0-9.-]*amazonaws\.com$/]);
+    bytes = file.bytes;
+    type = file.contentType === "application/octet-stream" ? "application/pdf" : file.contentType;
     ext = type.includes("png") ? "png" : "pdf";
   } else {
     bytes = await mockLabelPdf(trackingNumber, carrier, service, pieceLabel);
