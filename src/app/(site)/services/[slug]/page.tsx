@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { sitePhotos, type SitePhoto } from "@/components/ui/site-photos";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2, ClipboardList, Info, MapPin, Plane, Ship } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -13,6 +15,15 @@ import { airports, faqs, markets, ports, services } from "@/content/site";
 import { pageMeta, serviceSchema } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
+
+/** Brand photos used in the hero for services that have one (others keep their illustration). */
+const SERVICE_PHOTO: Record<string, SitePhoto> = {
+  "hotel-hospitality-logistics": sitePhotos.valet,
+  "vip-group-luggage": sitePhotos.sunrise,
+  "cruise-port-luggage": sitePhotos.cruise,
+  "luggage-storage": sitePhotos.qrScan,
+  "cargo-van-box-truck": sitePhotos.keysBridge,
+};
 
 export function generateStaticParams() {
   return services.map((s) => ({ slug: s.slug }));
@@ -59,7 +70,16 @@ export default async function ServicePage({ params }: Props) {
               <Link href="/service-areas" className="btn-ghost-light">Where we operate</Link>
             </div>
           </div>
-          <div className="lg:pl-6"><ServiceVisual kind={c.visual} /></div>
+          <div className="lg:pl-6">
+            {SERVICE_PHOTO[s.slug] ? (
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] shadow-[0_40px_80px_-30px_rgb(0_0_0/0.6)] ring-1 ring-white/15">
+                <Image src={SERVICE_PHOTO[s.slug].src} alt={SERVICE_PHOTO[s.slug].alt} fill priority sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" style={{ objectPosition: SERVICE_PHOTO[s.slug].position }} />
+                <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy-950/50 to-transparent" />
+              </div>
+            ) : (
+              <ServiceVisual kind={c.visual} />
+            )}
+          </div>
         </div>
         <div className="flight-line opacity-70" aria-hidden />
       </section>

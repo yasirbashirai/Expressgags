@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, CalendarClock, ClipboardCheck, FileText, Headset, Receipt, Repeat, Route } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
-import { PalletArt } from "@/components/ui/illustrations";
+import { sitePhotos } from "@/components/ui/site-photos";
 import { Section } from "@/components/ui/section";
 import { CtaBand } from "@/components/ui/cta-band";
 import { pageMeta } from "@/lib/seo";
@@ -29,7 +29,7 @@ export default function BusinessAccountsPage() {
   return (
     <>
       <PageHero
-        art={<PalletArt className="mx-auto h-64 w-auto" />}
+        photo={sitePhotos.sunrise}
         eyebrow="Business accounts"
         title="A dependable Florida operating partner for your guests, groups and routes."
         lead="Hotels, resorts, DMCs, tour operators, event organizers and commercial businesses get account-based service with clear terms, one dispatch contact and documented completion."

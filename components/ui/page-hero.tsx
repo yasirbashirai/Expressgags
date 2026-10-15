@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import type { SitePhoto } from "./site-photos";
 import type { ReactNode } from "react";
 import { Breadcrumbs } from "./breadcrumbs";
 
@@ -12,6 +14,7 @@ export function PageHero({
   primaryCta = { label: "Request a Quote", href: "/request-a-quote" },
   secondaryCta,
   art,
+  photo,
 }: {
   eyebrow?: string;
   title: string;
@@ -22,13 +25,27 @@ export function PageHero({
   secondaryCta?: { label: string; href: string };
   /** Optional brand illustration shown on the right on large screens (see components/ui/illustrations) */
   art?: ReactNode;
+  /** Optional full-bleed background photo (darkened on the text side for readability). Replaces `art`. */
+  photo?: SitePhoto;
 }) {
+  if (photo) art = undefined;
   return (
-    <section className="relative overflow-hidden bg-navy text-white">
-      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full border-[3px] border-orange/60" />
-      <div aria-hidden className="pointer-events-none absolute -right-10 top-10 h-[22rem] w-[22rem] rounded-full border border-white/10" />
+    <section className="relative isolate overflow-hidden bg-navy text-white">
+      {photo && (
+        <div aria-hidden className="absolute inset-0 -z-10">
+          <Image src={photo.src} alt="" fill priority sizes="100vw" className="object-cover" style={{ objectPosition: photo.position ?? "center" }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-navy-950/95 via-navy-950/75 to-navy-950/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy-950/60 to-transparent md:hidden" />
+        </div>
+      )}
+      {!photo && (
+        <>
+          <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full border-[3px] border-orange/60" />
+          <div aria-hidden className="pointer-events-none absolute -right-10 top-10 h-[22rem] w-[22rem] rounded-full border border-white/10" />
+        </>
+      )}
       <div aria-hidden className="stage-grid pointer-events-none absolute inset-0 opacity-40 [mask-image:linear-gradient(to_left,black,transparent_70%)]" />
-      <div className={`container-eb relative py-14 md:py-20 ${art ? "lg:grid lg:grid-cols-12 lg:items-center lg:gap-10" : ""}`}>
+      <div className={`container-eb relative ${photo ? "py-16 md:py-28" : "py-14 md:py-20"} ${art ? "lg:grid lg:grid-cols-12 lg:items-center lg:gap-10" : ""}`}>
         <div className={art ? "lg:col-span-7" : ""}>
         <Breadcrumbs items={crumbs} light />
         {eyebrow && <p className="eyebrow mt-8 !text-orange-100">{eyebrow}</p>}

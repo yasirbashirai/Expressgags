@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Compass, Layers, ShieldCheck, Users } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
-import { BoxTruckArt } from "@/components/ui/illustrations";
+import { sitePhotos } from "@/components/ui/site-photos";
 import { Section } from "@/components/ui/section";
 import { CtaBand } from "@/components/ui/cta-band";
 import { careStandard, company, exclusions, operatingEnvironments, winReasons } from "@/content/site";
@@ -21,7 +21,7 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        art={<BoxTruckArt className="w-full" />}
+        photo={sitePhotos.valet}
         eyebrow="About Express Bags"
         title="A Florida logistics company built in the field since 2010."
         lead={company.description}

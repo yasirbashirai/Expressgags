@@ -181,3 +181,15 @@
 @keyframes eb-marquee {
   to { transform: translateX(-50%); }
 }
+
+/* Home hero photo: very slow push-in for a cinematic feel (disabled for reduced motion) */
+@keyframes eb-hero-zoom {
+  from { transform: scale(1.06); }
+  to { transform: scale(1); }
+}
+.anim-hero-zoom {
+  animation: eb-hero-zoom 9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-hero-zoom { animation: none; }
+}

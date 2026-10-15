@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Truck, Ruler, ClipboardList, Users } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
-import { BoxTruckArt } from "@/components/ui/illustrations";
+import { sitePhotos } from "@/components/ui/site-photos";
 import { Section } from "@/components/ui/section";
 import { CtaBand } from "@/components/ui/cta-band";
 import { PhotoSlot } from "@/components/ui/photo-slot";
@@ -21,7 +21,7 @@ export default function FleetPage() {
   return (
     <>
       <PageHero
-        art={<BoxTruckArt className="w-full" />}
+        photo={sitePhotos.keysBridge}
         eyebrow="Fleet & capabilities"
         title="Capacity matched to the actual job."
         lead="From a single cargo van for a time-sensitive delivery to multiple box trucks for a group program, every vehicle is assigned to the size, timing and access requirements of an approved job."
