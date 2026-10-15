@@ -49,3 +49,9 @@ next-env.d.ts
 /prisma/dev.db*
 /test-results/
 /playwright-report/
+
+# API uploads (private) & generated Prisma client
+uploads/
+src/server/generated/
+.qa/agent-d/*.png
+.qa/

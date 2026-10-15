@@ -22,7 +22,7 @@ export function PageHero({
 }) {
   return (
     <section className="relative overflow-hidden bg-navy text-white">
-      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full border-[28px] border-orange/25" />
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full border-[3px] border-orange/60" />
       <div aria-hidden className="pointer-events-none absolute -right-10 top-10 h-[22rem] w-[22rem] rounded-full border border-white/10" />
       <div className="container-eb relative py-14 md:py-20">
         <Breadcrumbs items={crumbs} light />

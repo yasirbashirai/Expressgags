@@ -1,0 +1,361 @@
+// Express Bags platform database schema (Prisma 7, PostgreSQL).
+// Round 1: quote requests, admin users, settings, pricing rules, markets/zones,
+// and the order/piece model that Phase 2 (dispatch, tracking, POD) builds on.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/server/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Users & access
+// ---------------------------------------------------------------------------
+
+enum Role {
+  OWNER
+  STAFF
+  DISPATCHER
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String
+  role         Role       @default(STAFF)
+  active       Boolean    @default(true)
+  /// Reserved for TOTP two-factor authentication (Phase 1 security hardening)
+  totpSecret   String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+  notes        QuoteNote[]
+}
+
+// ---------------------------------------------------------------------------
+// Customers & B2B companies
+// ---------------------------------------------------------------------------
+
+model Company {
+  id         String          @id @default(cuid())
+  name       String
+  domain     String?         @unique /// used for HubSpot/Apollo de-duplication
+  industry   String?         /// hotels, dmc, cruise, sports, entertainment, corporate…
+  segment    String?
+  market     String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  customers  Customer[]
+  quotes     QuoteRequest[]
+}
+
+model Customer {
+  id               String         @id @default(cuid())
+  name             String
+  email            String         @unique
+  phone            String?
+  preferredContact String?
+  companyId        String?
+  company          Company?       @relation(fields: [companyId], references: [id])
+  hubspotContactId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  quotes           QuoteRequest[]
+  orders           Order[]
+
+  @@index([companyId])
+}
+
+// ---------------------------------------------------------------------------
+// Quote requests
+// ---------------------------------------------------------------------------
+
+enum QuoteRoute {
+  CUSTOM_QUOTE
+  STANDARD_QUOTE
+  SPECIAL_ROUTE
+}
+
+enum QuoteStatus {
+  NEW
+  REVIEWING
+  QUOTED
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum SyncStatus {
+  DISABLED
+  PENDING
+  SYNCED
+  FAILED
+}
+
+model QuoteRequest {
+  id                String       @id @default(cuid())
+  reference         String       @unique /// EB-Q-YYMMDD-XXXX
+  serviceType       String
+  route             QuoteRoute
+  routeReasons      String[]
+  status            QuoteStatus  @default(NEW)
+  pickupMarket      String
+  deliveryMarket    String
+  serviceDate       String
+  totalPieces       Int
+  leadSource        String
+  billingType       String
+  /// Full validated request (QuoteRequest from src/lib/quote-schema.ts)
+  payload           Json
+  /// Internal pricing preview (never shown publicly while pricing is disabled)
+  pricingPreview    Json?
+  customerId        String
+  customer          Customer     @relation(fields: [customerId], references: [id])
+  companyId         String?
+  company           Company?     @relation(fields: [companyId], references: [id])
+  hubspotSyncStatus SyncStatus   @default(DISABLED)
+  hubspotDealId     String?
+  hubspotError      String?
+  ipHash            String?
+  userAgent         String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  notes             QuoteNote[]
+  events            QuoteEvent[]
+  order             Order?
+
+  @@index([status])
+  @@index([serviceType])
+  @@index([pickupMarket])
+  @@index([createdAt])
+}
+
+model QuoteNote {
+  id        String       @id @default(cuid())
+  quoteId   String
+  quote     QuoteRequest @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  authorId  String?
+  author    User?        @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime     @default(now())
+
+  @@index([quoteId])
+}
+
+/// Timeline entries (created, status changed, email sent, synced…)
+model QuoteEvent {
+  id        String       @id @default(cuid())
+  quoteId   String
+  quote     QuoteRequest @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  type      String
+  detail    String?
+  actor     String?
+  createdAt DateTime     @default(now())
+
+  @@index([quoteId])
+}
+
+// ---------------------------------------------------------------------------
+// Orders & pieces (chain of custody foundation for Phase 2)
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  CONFIRMED
+  DRIVER_ASSIGNED
+  EN_ROUTE
+  PICKED_UP
+  AT_FACILITY
+  TRANSFERRED_TO_CARRIER
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id           String       @id @default(cuid())
+  reference    String       @unique /// EB-YYMMDD-XXXX; pieces are <reference>-01, -02…
+  status       OrderStatus  @default(CONFIRMED)
+  serviceType  String
+  customerId   String
+  customer     Customer     @relation(fields: [customerId], references: [id])
+  quoteId      String?      @unique
+  quote        QuoteRequest? @relation(fields: [quoteId], references: [id])
+  /// Assigned driver identity is visible only to staff and the booked customer after assignment
+  assignedDriverRef String?
+  retailCents  Int?
+  costCents    Int?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  pieces       OrderPiece[]
+
+  @@index([status])
+}
+
+model OrderPiece {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pieceId     String      @unique /// e.g. EB-261015-7K3P-01
+  category    String
+  status      OrderStatus @default(CONFIRMED)
+  barcode     String?     @unique /// barcode / QR / RFID-ready identifier
+  conditionNotes String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([orderId])
+}
+
+// ---------------------------------------------------------------------------
+// Geography & operations reference data
+// ---------------------------------------------------------------------------
+
+model Market {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  tier      String   /// top | next | additional
+  isHq      Boolean  @default(false)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  zones     Zone[]
+  locations RecognizedLocation[]
+}
+
+model Zone {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Zone?    @relation("ZoneTree", fields: [parentId], references: [id])
+  children  Zone[]   @relation("ZoneTree")
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+
+  @@index([marketId])
+}
+
+model RecognizedLocation {
+  id           String  @id @default(cuid())
+  code         String  @unique /// MIA, portmiami, …
+  name         String
+  type         String  /// airport | cruise-port | hotel | private-aviation | venue
+  marketId     String
+  market       Market  @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  instructions String?
+  surchargeCents Int   @default(0)
+  active       Boolean @default(true)
+}
+
+model VehicleClass {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  /// Capacity thresholds are set by Express Bags (never invented here)
+  maxPieces   Int?
+  maxWeightLbs Int?
+  sortOrder   Int     @default(0)
+  active      Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// Settings, pricing rules, permissions
+// ---------------------------------------------------------------------------
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+}
+
+model PricingRuleSet {
+  id        String   @id @default(cuid())
+  engine    String   /// local | carrier | storage
+  version   Int
+  active    Boolean  @default(false)
+  rules     Json
+  note      String?
+  createdBy String?
+  createdAt DateTime @default(now())
+
+  @@unique([engine, version])
+}
+
+model NotableProjectPermission {
+  projectId         String   @id /// matches notableProjects[].id in src/content/site.ts
+  permissionGranted Boolean  @default(false)
+  evidenceNote      String?
+  grantedAt         DateTime?
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?
+}
+
+// ---------------------------------------------------------------------------
+// Other inbound forms
+// ---------------------------------------------------------------------------
+
+model CareerApplication {
+  id         String   @id @default(cuid())
+  name       String
+  email      String
+  phone      String
+  role       String
+  market     String?
+  experience String?
+  message    String?
+  resumeId   String?
+  status     String   @default("NEW")
+  createdAt  DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  topic     String
+  message   String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model Upload {
+  id           String   @id @default(cuid())
+  originalName String
+  storedName   String   @unique
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  status    String   /// SENT | LOGGED (no SMTP) | FAILED
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

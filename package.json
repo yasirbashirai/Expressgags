@@ -15,7 +15,9 @@
     "db:dev": "prisma dev",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:content"
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build && npm run check:content",
+    "postinstall": "prisma generate",
+    "api:start": "tsx src/server/index.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",

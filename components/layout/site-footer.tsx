@@ -8,25 +8,6 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
   return (
     <footer className="bg-navy-950 text-white">
-      {/* CTA band */}
-      <div className="border-b border-white/10">
-        <div className="container-eb flex flex-col items-start justify-between gap-6 py-12 md:flex-row md:items-center">
-          <div>
-            <p className="eyebrow !text-orange-100">Ready when you are</p>
-            <h2 className="mt-3 text-2xl font-bold text-white md:text-3xl">Tell us what is moving. We will plan the rest.</h2>
-            <p className="mt-2 max-w-xl text-white/70">
-              Every route, time window and vehicle is confirmed by our dispatch team before we commit.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/request-a-quote" className="btn-primary">Request a Quote</Link>
-            <a href={contact.phoneHref} className="btn-ghost-light">
-              <Phone className="h-4 w-4" aria-hidden /> {contact.phoneDisplay}
-            </a>
-          </div>
-        </div>
-      </div>
-
       <div className="container-eb grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <Image src="/brand/express-bags-logo-reversed.png" alt="Express Bags, Inc." width={600} height={244} className="h-16 w-auto" />
