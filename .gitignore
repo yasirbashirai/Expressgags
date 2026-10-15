@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# build outputs per agent
+.next-*/
+# local db / env
+.env
+.env.*
+!.env.example
+/prisma/dev.db*
+/test-results/
+/playwright-report/

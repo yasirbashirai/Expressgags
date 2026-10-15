@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Express Bags design tokens.
+ * Brand colors sampled from the approved logo (confirm against the vector master before launch):
+ * navy #002858 · orange #E06010 · white #FFFFFF · charcoal #1F2933
+ * Feel: professional, dependable, modern, operational, premium hospitality. Not playful.
+ */
+@theme {
+  --color-navy-950: #00142d;
+  --color-navy-900: #001d40;
+  --color-navy: #002858;
+  --color-navy-700: #0a3a73;
+  --color-navy-600: #1d4f8c;
+  --color-navy-100: #e3ebf5;
+  --color-navy-50: #f2f6fb;
+
+  --color-orange: #e06010;
+  --color-orange-600: #c4520b;
+  --color-orange-700: #a34408; /* AA text on white */
+  --color-orange-100: #fde8d9;
+  --color-orange-50: #fff5ee;
+
+  --color-charcoal: #1f2933;
+  --color-slate-ink: #3e4c59;
+  --color-muted: #616e7c;
+  --color-line: #e4e7eb;
+  --color-cloud: #f5f7fa;
+  --color-sand: #faf7f2;
+
+  --font-display: var(--font-archivo), "Archivo", system-ui, sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --shadow-card: 0 1px 2px rgb(0 40 88 / 0.06), 0 8px 24px -12px rgb(0 40 88 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(0 40 88 / 0.06), 0 24px 48px -20px rgb(0 40 88 / 0.35);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-white text-charcoal font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display text-navy tracking-tight;
+  }
+  ::selection {
+    @apply bg-orange text-white;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-orange);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Reusable component utilities (Tailwind v4 @utility so they can be composed with @apply) */
+@utility container-eb {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+@utility eyebrow {
+  @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700;
+  &::before {
+    content: "";
+    @apply inline-block h-px w-6 bg-orange;
+  }
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-60;
+}
+@utility btn-primary {
+  @apply btn bg-orange text-white shadow-[0_8px_20px_-8px_rgb(224_96_16/0.7)] hover:bg-orange-600;
+}
+@utility btn-navy {
+  @apply btn bg-navy text-white hover:bg-navy-700;
+}
+@utility btn-ghost {
+  @apply btn border border-navy/15 bg-white text-navy hover:border-navy/40 hover:bg-navy-50;
+}
+@utility btn-ghost-light {
+  @apply btn border border-white/30 text-white hover:bg-white/10;
+}
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-line bg-white shadow-[var(--shadow-card)];
+}
+@utility prose-eb {
+  @apply text-slate-ink leading-relaxed;
+  & h2 { @apply mt-10 mb-3 text-2xl font-bold; }
+  & h3 { @apply mt-6 mb-2 text-lg font-semibold; }
+  & p { @apply mb-4; }
+  & ul { @apply mb-4 list-disc pl-6; }
+  & li { @apply mb-1.5; }
+  & a { @apply text-orange-700 underline; }
+}
+/* The connective "flight line" motif from the logo underline */
+@utility flight-line {
+  background-image: linear-gradient(90deg, var(--color-orange) 0 60%, transparent 60%);
+  background-size: 14px 2px;
+  background-repeat: repeat-x;
+  height: 2px;
 }

@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Express Bags Platform
 
-## Getting Started
+Website + booking/quote platform for **Express Bags, Inc.** (Miami, est. 2010): Florida luggage logistics, hospitality transfers, courier & last-mile, luggage storage and cargo-van/box-truck logistics.
 
-First, run the development server:
+Built by Yasir Bashir. Requirements live in `../express-bags-client/` (read `START-HERE.md` and `BUILD-PLAN.md`).
 
+## Stack
+- **Web:** Next.js 15 (React 19, App Router) + Tailwind CSS 4 — `src/app`, `components/`, `public/`
+- **API:** Node + Express 5, Prisma 7, PostgreSQL — `src/server/`, `prisma/`
+- **Tests:** Vitest (unit/API), Playwright (end-to-end), `scripts/check-content.mjs` (privacy & claims guardrails)
+
+## Key files
+- `src/content/site.ts` — single source of truth for every public fact (contact, services, markets, airports, ports, FAQ, history). Change facts here only.
+- `src/lib/quote-schema.ts` — shared quote-request contract (website + API).
+- `scripts/check-content.mjs` — fails the build if private data or banned claims appear on any page.
+
+## Commands
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev            # website on http://localhost:3000
+npm run db:dev         # local Postgres (Prisma dev server)
+npm run api:dev        # API on http://localhost:4000
+npm run verify         # typecheck + lint + unit tests + build + content guardrails
+npm run test:e2e       # Playwright end-to-end tests
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Privacy rules (from the client — never break)
+Public contact = P.O. Box 667538, Miami, FL 33166 and office (305) 783-2860 only. Never the street address, the owner's mobile, the owner's email, the owner's name/photo/bio, or any employee identity. No client names/logos without written permission. No "24/7", "guaranteed", "licensed and insured", moving or food delivery.
