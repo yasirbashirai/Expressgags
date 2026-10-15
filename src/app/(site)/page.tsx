@@ -6,6 +6,7 @@ import { RoutePlanner } from "@/components/home/route-planner";
 import { Credibility, MarketsGrid } from "@/components/home/credibility";
 import { CtaBand } from "@/components/ui/cta-band";
 import { SocialFeeds } from "@/components/home/social-feeds";
+import { InAction } from "@/components/home/in-action";
 import { pageMeta } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function HomePage() {
     <>
       <HomeHero />
       <ServicesShowcase />
+      <InAction />
       <FollowABag />
       <RoutePlanner />
       <CareStandard />
