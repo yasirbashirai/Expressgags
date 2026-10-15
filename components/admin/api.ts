@@ -49,4 +49,4 @@ export type QuoteSummary = {
   createdAt: string;
 };
 
-export type AdminUser = { id: string; email: string; role: "OWNER" | "STAFF" | "DISPATCHER"; name: string | null };
+export type AdminUser = { id: string; email: string; role: "OWNER" | "STAFF" | "DISPATCHER" | "DRIVER" | "ACCOUNTING"; name: string | null };

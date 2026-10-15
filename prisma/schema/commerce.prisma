@@ -1,0 +1,192 @@
+// Phase 3 — commerce: quotations (priced offers), online acceptance, invoices, payments,
+// customer accounts (addresses, documents), protection claims.
+
+/// A priced, itemized offer built by staff from a quote request (or instantly by the pricing engines).
+model Quotation {
+  id            String        @id @default(cuid())
+  reference     String        @unique /// EB-QT-YYMMDD-XXXX
+  quoteRequestId String?
+  quoteRequest  QuoteRequest? @relation(fields: [quoteRequestId], references: [id])
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  createdById   String?
+  createdBy     User?         @relation("QuotationAuthor", fields: [createdById], references: [id])
+  /// DRAFT | SENT | VIEWED | ACCEPTED | DECLINED | EXPIRED | CONVERTED
+  status        String        @default("DRAFT")
+  /// manual (staff-built) | instant (pricing engine)
+  source        String        @default("manual")
+  title         String
+  scope         String?       /// included scope, assumptions, change policy (form Q9)
+  terms         String?
+  validUntil    DateTime?
+  subtotalCents Int           @default(0)
+  discountCents Int           @default(0)
+  taxCents      Int           @default(0)
+  totalCents    Int           @default(0)
+  /// Internal economics — NEVER exposed to customers
+  costCents     Int?
+  marginPct     Float?
+  /// Deposit rule (percentage or flat) — configurable per quotation
+  depositType   String        @default("none") /// none | percent | flat
+  depositValue  Float         @default(0)
+  depositCents  Int           @default(0)
+  /// Secret token for the customer acceptance link
+  publicToken   String        @unique
+  viewedAt      DateTime?
+  sentAt        DateTime?
+  /// Electronic acceptance record (ESIGN: name typed, checkbox, timestamp, IP, user agent)
+  acceptedAt    DateTime?
+  acceptedName  String?
+  acceptedTitle String?
+  acceptedIp    String?
+  acceptedUserAgent String?
+  declinedAt    DateTime?
+  declineReason String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  lines         QuotationLine[]
+  order         Order?
+  payments      Payment[]
+
+  @@index([status])
+  @@index([customerId])
+}
+
+model QuotationLine {
+  id           String    @id @default(cuid())
+  quotationId  String
+  quotation    Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  /// transport | truck | driver | helper | mileage | waiting | storage | handling | equipment | coordination | protection | discount | other
+  kind         String
+  description  String
+  quantity     Float     @default(1)
+  unit         String?   /// hour, mile, truck, piece, day…
+  unitCents    Int
+  /// Internal cost per unit (for margin), hidden from customer
+  unitCostCents Int?
+  totalCents   Int
+  sortOrder    Int       @default(0)
+}
+
+model Invoice {
+  id           String     @id @default(cuid())
+  number       String     @unique /// EB-INV-000123
+  customerId   String
+  customer     Customer   @relation(fields: [customerId], references: [id])
+  companyId    String?
+  company      Company?   @relation(fields: [companyId], references: [id])
+  /// DRAFT | SENT | PARTIAL | PAID | OVERDUE | VOID
+  status       String     @default("DRAFT")
+  issuedAt     DateTime?
+  dueAt        DateTime?
+  poNumber     String?
+  costCenter   String?
+  subtotalCents Int       @default(0)
+  taxCents     Int        @default(0)
+  totalCents   Int        @default(0)
+  paidCents    Int        @default(0)
+  notes        String?
+  pdfUploadId  String?
+  qboInvoiceId String?
+  qboSyncStatus String    @default("DISABLED") /// DISABLED | PENDING | SYNCED | FAILED
+  qboError     String?
+  publicToken  String     @unique
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lines        InvoiceLine[]
+  payments     Payment[]
+
+  @@index([status, dueAt])
+  @@index([customerId])
+}
+
+model InvoiceLine {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  description String
+  quantity    Float    @default(1)
+  unitCents   Int
+  totalCents  Int
+  sortOrder   Int      @default(0)
+}
+
+model Payment {
+  id            String     @id @default(cuid())
+  /// stripe | ach | check | cash | account | mock
+  method        String
+  /// DEPOSIT | PAYMENT | REFUND
+  kind          String     @default("PAYMENT")
+  /// PENDING | SUCCEEDED | FAILED | REFUNDED
+  status        String     @default("PENDING")
+  amountCents   Int
+  currency      String     @default("usd")
+  orderId       String?
+  order         Order?     @relation(fields: [orderId], references: [id])
+  invoiceId     String?
+  invoice       Invoice?   @relation(fields: [invoiceId], references: [id])
+  quotationId   String?
+  quotation     Quotation? @relation(fields: [quotationId], references: [id])
+  providerRef   String?    @unique /// Stripe checkout session / payment intent id
+  receiptUploadId String?
+  recordedBy    String?
+  note          String?
+  qboPaymentId  String?
+  createdAt     DateTime   @default(now())
+
+  @@index([status])
+}
+
+model SavedAddress {
+  id          String    @id @default(cuid())
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label       String
+  type        String    /// hotel | airport | cruise-port | residence | business | venue | private-aviation | storage | other
+  address     String
+  facility    String?
+  market      String
+  contactName String?
+  contactPhone String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
+
+model CustomerDocument {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title       String
+  uploadId    String
+  orderId     String?
+  createdAt   DateTime @default(now())
+}
+
+/// Optional Express Bags protection claims. Module stays OFF until Florida legal structure is approved.
+model Claim {
+  id            String   @id @default(cuid())
+  reference     String   @unique /// EB-CL-YYMMDD-XXXX
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  tier          String   /// basic | plus | vip
+  maxBenefitCents Int
+  claimedCents  Int
+  description   String
+  /// SUBMITTED | UNDER_REVIEW | NEED_INFO | APPROVED | PARTIAL | DENIED | PAID
+  status        String   @default("SUBMITTED")
+  evidenceUploadIds String[]
+  decisionCents Int?
+  decisionNote  String?
+  decidedBy     String?
+  decidedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+}

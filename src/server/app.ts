@@ -10,6 +10,7 @@ import { env } from "./lib/env";
 import { errorMiddleware } from "./lib/errors";
 import { adminRouter } from "./routes/admin";
 import { publicRouter } from "./routes/public";
+import { platformModules } from "./modules";
 
 /** Allowed browser origins: WEB_ORIGIN list + local dev ports 3000–3299. */
 function originAllowed(origin: string | undefined) {
@@ -32,11 +33,19 @@ export function createApp() {
     }),
   );
   app.use(cookieParser());
+  // Provider webhooks need the raw body (signature verification) → mounted before the JSON parser
+  for (const m of platformModules) for (const r of m.routes) if (r.scope === "webhook") app.use(`/v1${r.path}`, r.router);
   // JSON only for non-multipart routes; multipart endpoints read the raw stream themselves
-  app.use((req, res, next) => (req.is("multipart/form-data") ? next() : express.json({ limit: "200kb" })(req, res, next)));
+  app.use((req, res, next) => (req.is("multipart/form-data") ? next() : express.json({ limit: "1mb" })(req, res, next)));
 
   app.use("/v1", publicRouter);
   app.use("/v1/admin", adminRouter);
+  for (const m of platformModules) {
+    for (const r of m.routes) {
+      if (r.scope === "admin") app.use(`/v1/admin${r.path}`, r.router);
+      else if (r.scope === "public") app.use(`/v1${r.path}`, r.router);
+    }
+  }
   app.use((_req, res) => res.status(404).json({ ok: false, error: "Not found." }));
   app.use(errorMiddleware);
   return app;

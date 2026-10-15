@@ -8,19 +8,60 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { Briefcase, Inbox, LayoutDashboard, LogOut, Mail, Menu, Settings, X } from "lucide-react";
+import {
+  BadgeCheck, BarChart3, Bell, Briefcase, Building2, FileText, Inbox, KeyRound, LayoutDashboard, LogOut, Mail, MapPinned, Menu, Newspaper,
+  Package, Plane, Receipt, Route, Settings, ShieldCheck, Sparkles, TriangleAlert, Truck, Users, Warehouse, X,
+} from "lucide-react";
 import { api, ApiError, type AdminUser } from "./api";
 
 const UserContext = createContext<AdminUser | null>(null);
 export const useAdminUser = () => useContext(UserContext);
 
-const NAV = [
-  { href: "/admin", label: "Dashboard", Icon: LayoutDashboard, roles: ["OWNER", "STAFF", "DISPATCHER"] },
-  { href: "/admin/quotes", label: "Quote requests", Icon: Inbox, roles: ["OWNER", "STAFF", "DISPATCHER"] },
-  { href: "/admin/messages", label: "Messages", Icon: Mail, roles: ["OWNER", "STAFF"] },
-  { href: "/admin/careers", label: "Career applications", Icon: Briefcase, roles: ["OWNER", "STAFF"] },
-  { href: "/admin/settings", label: "Settings & pricing", Icon: Settings, roles: ["OWNER", "STAFF", "DISPATCHER"] },
+type NavItem = { href: string; label: string; Icon: typeof LayoutDashboard; roles: string[] };
+const ALL = ["OWNER", "STAFF", "DISPATCHER", "ACCOUNTING"];
+const OPS = ["OWNER", "STAFF", "DISPATCHER"];
+const MONEY = ["OWNER", "STAFF", "ACCOUNTING"];
+/** Admin navigation, grouped. Each module's pages live at these routes (src/app/admin/**). */
+const NAV_GROUPS: { title: string; items: NavItem[] }[] = [
+  { title: "Overview", items: [
+    { href: "/admin", label: "Dashboard", Icon: LayoutDashboard, roles: ALL },
+    { href: "/admin/reports", label: "Reports & insights", Icon: BarChart3, roles: ["OWNER", "STAFF", "ACCOUNTING"] },
+  ] },
+  { title: "Sales", items: [
+    { href: "/admin/quotes", label: "Quote requests", Icon: Inbox, roles: OPS },
+    { href: "/admin/quotations", label: "Quotations", Icon: FileText, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/customers", label: "Customers & accounts", Icon: Building2, roles: ["OWNER", "STAFF", "ACCOUNTING"] },
+  ] },
+  { title: "Operations", items: [
+    { href: "/admin/orders", label: "Orders", Icon: Package, roles: OPS },
+    { href: "/admin/dispatch", label: "Dispatch board", Icon: Route, roles: OPS },
+    { href: "/admin/exceptions", label: "Exceptions", Icon: TriangleAlert, roles: OPS },
+    { href: "/admin/storage", label: "Storage", Icon: Warehouse, roles: OPS },
+    { href: "/admin/shipments", label: "Carrier shipments", Icon: Plane, roles: OPS },
+  ] },
+  { title: "Resources", items: [
+    { href: "/admin/team", label: "Team", Icon: Users, roles: ["OWNER", "STAFF", "DISPATCHER"] },
+    { href: "/admin/fleet", label: "Fleet", Icon: Truck, roles: OPS },
+    { href: "/admin/credentials", label: "Credentials", Icon: BadgeCheck, roles: ["OWNER", "STAFF"] },
+  ] },
+  { title: "Money", items: [
+    { href: "/admin/billing", label: "Invoices & payments", Icon: Receipt, roles: MONEY },
+    { href: "/admin/claims", label: "Protection claims", Icon: ShieldCheck, roles: ["OWNER", "STAFF"] },
+  ] },
+  { title: "Engagement", items: [
+    { href: "/admin/messages", label: "Messages", Icon: Mail, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/careers", label: "Career applications", Icon: Briefcase, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/notifications", label: "Notifications", Icon: Bell, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/assistant", label: "AI assistant", Icon: Sparkles, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/content", label: "Website content", Icon: Newspaper, roles: ["OWNER", "STAFF"] },
+  ] },
+  { title: "System", items: [
+    { href: "/admin/settings", label: "Settings & pricing", Icon: Settings, roles: OPS.concat("ACCOUNTING") },
+    { href: "/admin/reference", label: "Markets & zones", Icon: MapPinned, roles: ["OWNER", "STAFF"] },
+    { href: "/admin/users", label: "Users & security", Icon: KeyRound, roles: ["OWNER"] },
+  ] },
 ];
+
 
 /**
  * Admin page wrapper. Admin pages sit outside the (site) route group, so the public header/footer never render here; the
@@ -78,7 +119,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const nav = NAV.filter((n) => n.roles.includes(user.role));
+  const groups = NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((n) => n.roles.includes(user.role)) })).filter((g) => g.items.length);
   const isActive = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname.startsWith(href));
 
   const sidebar = (
@@ -89,21 +130,28 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </Link>
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/50">Operations admin</p>
       </div>
-      <ul className="flex-1 space-y-1 px-3">
-        {nav.map(({ href, label, Icon }) => (
-          <li key={href}>
-            <Link
-              href={href}
-              aria-current={isActive(href) ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                isActive(href) ? "bg-white text-navy" : "text-white/80 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <Icon className="h-4 w-4" aria-hidden /> {label}
-            </Link>
-          </li>
+      <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+        {groups.map((g) => (
+          <div key={g.title}>
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">{g.title}</p>
+            <ul className="space-y-0.5">
+              {g.items.map(({ href, label, Icon }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    aria-current={isActive(href) ? "page" : undefined}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                      isActive(href) ? "bg-white text-navy" : "text-white/80 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden /> {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
       <div className="border-t border-white/10 p-4 text-xs text-white/70">
         <p className="truncate font-semibold text-white">{user.email}</p>
         <p className="mt-0.5 capitalize">{user.role.toLowerCase()}</p>

@@ -4,7 +4,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../src/server/generated/prisma"
+  output   = "../../src/server/generated/prisma"
 }
 
 datasource db {
@@ -19,6 +19,8 @@ enum Role {
   OWNER
   STAFF
   DISPATCHER
+  DRIVER
+  ACCOUNTING
 }
 
 model User {
@@ -33,8 +35,15 @@ model User {
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  /// TOTP 2FA is enforced at login once enabled
+  totpEnabled  Boolean    @default(false)
+  failedLogins Int        @default(0)
+  lockedUntil  DateTime?
+  mustChangePassword Boolean @default(false)
   auditLogs    AuditLog[]
   notes        QuoteNote[]
+  employee     Employee?
+  quotationsCreated Quotation[] @relation("QuotationAuthor")
 }
 
 // ---------------------------------------------------------------------------
@@ -48,10 +57,27 @@ model Company {
   industry   String?         /// hotels, dmc, cruise, sports, entertainment, corporate…
   segment    String?
   market     String?
+  /// B2B account settings (form Q24): onboarding, terms, PO support, centralized invoicing
+  accountType   String?   /// hotel | resort | dmc | cruise | corporate | sports | entertainment | event | university | commercial
+  accountStatus String    @default("PROSPECT") /// PROSPECT | PENDING | ACTIVE | ON_HOLD
+  billingEmail  String?
+  paymentTermsDays Int    @default(0)
+  poRequired    Boolean   @default(false)
+  creditLimitCents Int?
+  /// Negotiated pricing: optional rule-set overrides applied by the pricing engines
+  negotiatedRules Json?
+  taxId         String?
+  w9UploadId    String?
+  qboCustomerId String?
+  hubspotCompanyId String?
+  notes         String?
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
   customers  Customer[]
   quotes     QuoteRequest[]
+  orders     Order[]
+  invoices   Invoice[]
+  savedLocations SavedAddress[]
 }
 
 model Customer {
@@ -63,10 +89,26 @@ model Customer {
   companyId        String?
   company          Company?       @relation(fields: [companyId], references: [id])
   hubspotContactId String?
+  /// Portal login (null until the customer creates an account)
+  passwordHash     String?
+  emailVerifiedAt  DateTime?
+  /// INDIVIDUAL | COMPANY_ADMIN | COMPANY_USER | CONCIERGE (hotel partner staff)
+  accountRole      String         @default("INDIVIDUAL")
+  /// Optional cost center / PO defaults for corporate users
+  defaultCostCenter String?
+  language         String         @default("en")
+  marketingOptIn   Boolean        @default(false)
+  lastLoginAt      DateTime?
+  qboCustomerId    String?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
   quotes           QuoteRequest[]
   orders           Order[]
+  addresses        SavedAddress[]
+  quotations       Quotation[]
+  invoices         Invoice[]
+  claims           Claim[]
+  documents        CustomerDocument[]
 
   @@index([companyId])
 }
@@ -128,6 +170,9 @@ model QuoteRequest {
   notes             QuoteNote[]
   events            QuoteEvent[]
   order             Order?
+  quotations        Quotation[]
+  /// AI lead-qualification summary (internal only)
+  aiSummary         Json?
 
   @@index([status])
   @@index([serviceType])
@@ -182,19 +227,70 @@ model Order {
   reference    String       @unique /// EB-YYMMDD-XXXX; pieces are <reference>-01, -02…
   status       OrderStatus  @default(CONFIRMED)
   serviceType  String
+  /// local | nationwide | storage | custom (fulfillment path chosen by the decision engine)
+  fulfillment  String       @default("local")
   customerId   String
   customer     Customer     @relation(fields: [customerId], references: [id])
+  companyId    String?
+  company      Company?     @relation(fields: [companyId], references: [id])
   quoteId      String?      @unique
   quote        QuoteRequest? @relation(fields: [quoteId], references: [id])
+  quotationId  String?      @unique
+  quotation    Quotation?   @relation(fields: [quotationId], references: [id])
+  /// Route & schedule
+  pickup       Json         /// { type, address, facility, market, contact, notes, lat?, lng? }
+  delivery     Json
+  extraStops   Json?
+  serviceDate  DateTime
+  timeWindow   String?
+  windowStart  DateTime?
+  windowEnd    DateTime?
+  market       String
+  priority     String       @default("NORMAL") /// NORMAL | RUSH | VIP
+  vehicleClassCode String?
+  specialHandling String?
+  accessNotes  String?
+  customerNotes String?
+  internalNotes String?
+  poNumber     String?
+  costCenter   String?
+  /// Booked by a hotel concierge on behalf of a guest
+  guestName    String?
+  guestRoom    String?
+  bookedByCustomerId String?
   /// Assigned driver identity is visible only to staff and the booked customer after assignment
   assignedDriverRef String?
+  /// Money (integer cents)
   retailCents  Int?
   costCents    Int?
+  depositCents Int?
+  pricingBreakdown Json?
+  paymentStatus String      @default("UNPAID") /// UNPAID | DEPOSIT_PAID | PAID | INVOICED | REFUNDED | ACCOUNT
+  protectionTier String?    /// basic | plus | vip (module hidden until legal approval)
+  protectionCents Int?
+  cancelledAt  DateTime?
+  cancelReason String?
+  completedAt  DateTime?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   pieces       OrderPiece[]
+  events       OrderEvent[]
+  assignments  Assignment[]
+  exceptions   OrderException[]
+  proofs       ProofOfDelivery[]
+  invoiceLines InvoiceLine[]
+  payments     Payment[]
+  shipments    CarrierShipment[]
+  storage      StorageBooking[]
+  notifications Notification[]
+  survey       SurveyResponse?
+  claims       Claim[]
 
   @@index([status])
+  @@index([serviceDate])
+  @@index([customerId])
+  @@index([companyId])
+  @@index([market])
 }
 
 model OrderPiece {
@@ -206,8 +302,17 @@ model OrderPiece {
   status      OrderStatus @default(CONFIRMED)
   barcode     String?     @unique /// barcode / QR / RFID-ready identifier
   conditionNotes String?
+  description String?
+  weightLbs   Float?
+  lengthIn    Float?
+  widthIn     Float?
+  heightIn    Float?
+  /// Current custody location: with driver, facility, storage bay, carrier…
+  custodyLocation String?
+  storageBay  String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  events      OrderEvent[]
 
   @@index([orderId])
 }
@@ -334,7 +439,17 @@ model Upload {
   storedName   String   @unique
   mimeType     String
   sizeBytes    Int
+  /// What this file belongs to (order-photo, signature, pod, employee-doc, vehicle-doc, claim-evidence, cms, invoice-pdf, label…)
+  kind         String?
+  ownerType    String?
+  ownerId      String?
+  /// Only CMS media (gallery, blog covers, resources) may ever be served publicly
+  isPublic     Boolean  @default(false)
+  uploadedBy   String?
+  sha256       String?
   createdAt    DateTime @default(now())
+
+  @@index([ownerType, ownerId])
 }
 
 model EmailLog {

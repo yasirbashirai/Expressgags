@@ -1,0 +1,311 @@
+// Phase 2 — operations: dispatch, chain of custody, proof of delivery, exceptions,
+// employees, fleet, credentials, reminders, storage, carrier shipments.
+
+// ---------------------------------------------------------------------------
+// Chain of custody & dispatch
+// ---------------------------------------------------------------------------
+
+/// Every status change, scan, photo and handoff. Order-level or piece-level.
+model OrderEvent {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pieceId     String?
+  piece       OrderPiece? @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+  /// STATUS | SCAN | PHOTO | NOTE | HANDOFF | EXCEPTION | NOTIFICATION | CARRIER | STORAGE | CUSTOMER
+  type        String
+  status      OrderStatus?
+  detail      String?
+  /// Who did it: user id / employee id / "customer" / "system" / "carrier"
+  actorType   String      @default("system")
+  actorId     String?
+  actorName   String?
+  lat         Float?
+  lng         Float?
+  uploadIds   String[]
+  /// Visible to the booked customer on tracking (internal notes stay false)
+  customerVisible Boolean @default(false)
+  createdAt   DateTime    @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([pieceId])
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  employeeId  String
+  employee    Employee  @relation(fields: [employeeId], references: [id])
+  /// DRIVER | HELPER | SUPERVISOR
+  role        String    @default("DRIVER")
+  vehicleId   String?
+  vehicle     Vehicle?  @relation(fields: [vehicleId], references: [id])
+  /// Stop order within the employee's day
+  sequence    Int       @default(0)
+  status      String    @default("ASSIGNED") /// ASSIGNED | ACCEPTED | IN_PROGRESS | DONE | REMOVED
+  assignedBy  String?
+  assignedAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([employeeId, assignedAt])
+  @@index([orderId])
+}
+
+model ProofOfDelivery {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// PICKUP | DELIVERY | RELEASE | CARRIER_HANDOFF
+  kind           String
+  pieceCount     Int
+  recipientName  String?
+  signatureUploadId String?
+  photoUploadIds String[]
+  conditionNotes String?
+  lat            Float?
+  lng            Float?
+  employeeId     String?
+  capturedAt     DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model OrderException {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// LATE_PICKUP | CARRIER_DELAY | ADDRESS_PROBLEM | PAYMENT_FAILURE | DESTINATION_CHANGE | OVERSIZED_ITEM | COUNT_MISMATCH | DELIVERY_FAILED | CAPACITY | DAMAGE | OTHER
+  type        String
+  severity    String    @default("MEDIUM") /// LOW | MEDIUM | HIGH | CRITICAL
+  status      String    @default("OPEN") /// OPEN | ACKNOWLEDGED | RESOLVED
+  detail      String?
+  reportedBy  String?
+  resolution  String?
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  uploadIds   String[]
+  createdAt   DateTime  @default(now())
+
+  @@index([status, severity])
+  @@index([orderId])
+}
+
+// ---------------------------------------------------------------------------
+// Employees (identities are PRIVATE — never shown on the public site)
+// ---------------------------------------------------------------------------
+
+model Employee {
+  id            String     @id @default(cuid())
+  userId        String?    @unique
+  user          User?      @relation(fields: [userId], references: [id])
+  firstName     String
+  lastName      String
+  /// DRIVER | HELPER | DISPATCH | OFFICE | MANAGEMENT
+  role          String
+  phone         String?
+  email         String?
+  homeMarket    String?
+  status        String     @default("ACTIVE") /// ACTIVE | INACTIVE | ON_LEAVE
+  employmentType String?   /// employee | contractor
+  hireDate      DateTime?
+  licenseNumber String?
+  licenseClass  String?    /// e.g. Class C, CDL-B
+  licenseExpiresAt DateTime?
+  internalNotes String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  assignments   Assignment[]
+  availability  Availability[]
+  credentials   Credential[]
+  documents     EmployeeDocument[]
+}
+
+model Availability {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  /// AVAILABLE | UNAVAILABLE | TIME_OFF | SHIFT
+  kind        String   @default("SHIFT")
+  startsAt    DateTime
+  endsAt      DateTime
+  note        String?
+
+  @@index([employeeId, startsAt])
+}
+
+/// Airport / port / facility credentials (TWIC, badges, permits) — secure register (form Q33)
+model Credential {
+  id          String    @id @default(cuid())
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  vehicleId   String?
+  vehicle     Vehicle?  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  /// Facility code (MIA, portmiami, …) or "company"
+  facility    String
+  /// TWIC | AIRPORT_BADGE | PORT_PASS | VEHICLE_PERMIT | INSURANCE_COI | DOT | MC | BONDING | OTHER
+  type        String
+  identifier  String?
+  issuedAt    DateTime?
+  expiresAt   DateTime?
+  uploadId    String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([expiresAt])
+}
+
+model EmployeeDocument {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  title       String
+  uploadId    String
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Fleet
+// ---------------------------------------------------------------------------
+
+model Vehicle {
+  id             String    @id @default(cuid())
+  unitNumber     String    @unique
+  vehicleClassCode String  /// cargo-van | box-15 | box-20 | box-26
+  make           String?
+  model          String?
+  year           Int?
+  plate          String?
+  vin            String?
+  homeMarket     String?
+  status         String    @default("AVAILABLE") /// AVAILABLE | IN_SERVICE | MAINTENANCE | OUT_OF_SERVICE
+  odometer       Int?
+  registrationExpiresAt DateTime?
+  insuranceExpiresAt    DateTime?
+  inspectionExpiresAt   DateTime?
+  photoUploadId  String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  assignments    Assignment[]
+  maintenance    MaintenanceRecord[]
+  documents      VehicleDocument[]
+  credentials    Credential[]
+}
+
+model MaintenanceRecord {
+  id          String    @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  /// SCHEDULED | COMPLETED | CANCELLED
+  status      String    @default("SCHEDULED")
+  type        String    /// oil change, tires, inspection, repair…
+  scheduledFor DateTime?
+  completedAt DateTime?
+  odometer    Int?
+  costCents   Int?
+  vendor      String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([vehicleId])
+}
+
+model VehicleDocument {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  title       String   /// title, registration, insurance card, inspection…
+  uploadId    String
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+}
+
+/// Expiration & maintenance reminders (license, registration, insurance, credentials, maintenance)
+model Reminder {
+  id          String    @id @default(cuid())
+  entityType  String    /// employee | vehicle | credential | maintenance | storage
+  entityId    String
+  title       String
+  dueAt       DateTime
+  /// OPEN | SENT | DONE | DISMISSED
+  status      String    @default("OPEN")
+  lastSentAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([entityType, entityId, title])
+  @@index([status, dueAt])
+}
+
+// ---------------------------------------------------------------------------
+// Storage (capacity-managed)
+// ---------------------------------------------------------------------------
+
+model StorageLocation {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  market        String
+  /// Capacity per period (pieces) — set by Express Bags, never invented
+  capacityPieces Int
+  /// Optional per-hour-block capacity rules
+  rules         Json?
+  /// Address is PRIVATE (shared with booked customers only)
+  addressPrivate String?
+  active        Boolean  @default(true)
+  bookings      StorageBooking[]
+}
+
+model StorageBooking {
+  id          String          @id @default(cuid())
+  reference   String          @unique
+  orderId     String?
+  order       Order?          @relation(fields: [orderId], references: [id])
+  locationId  String
+  location    StorageLocation @relation(fields: [locationId], references: [id])
+  startsAt    DateTime
+  endsAt      DateTime
+  pieces      Int
+  /// RESERVED | CHECKED_IN | RELEASED | CANCELLED | OVERSTAY
+  status      String          @default("RESERVED")
+  withPickup  Boolean         @default(false)
+  withDelivery Boolean        @default(false)
+  retailCents Int?
+  checkedInAt DateTime?
+  releasedAt  DateTime?
+  createdAt   DateTime        @default(now())
+
+  @@index([locationId, startsAt, endsAt])
+}
+
+// ---------------------------------------------------------------------------
+// Nationwide carrier shipments (UPS / FedEx / DHL / USPS behind EB pricing)
+// ---------------------------------------------------------------------------
+
+model CarrierShipment {
+  id             String    @id @default(cuid())
+  orderId        String
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pieceId        String?
+  provider       String    /// easypost | shippo | mock
+  carrier        String    /// UPS | FedEx | DHL | USPS
+  service        String
+  /// Express Bags service level shown to the customer (economy | standard | priority | express | next-day)
+  ebServiceLevel String
+  providerShipmentId String?
+  trackingNumber String?
+  labelUploadId  String?
+  costCents      Int
+  retailCents    Int
+  billableWeightLbs Float?
+  transitDays    Int?
+  /// CREATED | LABELED | TENDERED | IN_TRANSIT | DELIVERED | EXCEPTION | VOIDED
+  status         String    @default("CREATED")
+  events         Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([trackingNumber])
+}

@@ -1,0 +1,183 @@
+// Engagement: notifications, surveys & reviews, CMS content, AI assistant, auth tokens, webhooks.
+
+/// Every customer/staff message sent (email, SMS, WhatsApp) — for audit and the order timeline.
+model Notification {
+  id          String   @id @default(cuid())
+  /// email | sms | whatsapp
+  channel     String
+  to          String
+  /// template key, e.g. order.confirmed, order.driver_assigned, order.en_route, order.delivered, survey.request, reminder.expiry
+  template    String
+  subject     String?
+  body        String?
+  /// QUEUED | SENT | LOGGED (provider not configured) | FAILED | SKIPPED (opted out)
+  status      String   @default("QUEUED")
+  provider    String?
+  providerRef String?
+  error       String?
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model SurveyResponse {
+  id            String    @id @default(cuid())
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  token         String    @unique
+  rating        Int?      /// 1–5
+  comment       String?
+  /// Customer agreed this comment may be published as a testimonial (written permission)
+  publishConsent Boolean  @default(false)
+  attribution   String?
+  reviewLinkClickedAt DateTime?
+  sentAt        DateTime?
+  respondedAt   DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// CMS (all public content is permission-gated and reviewed before publishing)
+// ---------------------------------------------------------------------------
+
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  /// Markdown body
+  body        String
+  coverUploadId String?
+  category    String?
+  tags        String[]
+  /// DRAFT | PUBLISHED | ARCHIVED
+  status      String    @default("DRAFT")
+  seoTitle    String?
+  seoDescription String?
+  language    String    @default("en")
+  authorLabel String    @default("Express Bags Team") /// never a personal name (privacy)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Testimonial {
+  id            String   @id @default(cuid())
+  quote         String
+  /// Generic attribution allowed by the client (e.g. "Hotel operations manager, Miami Beach")
+  attribution   String
+  /// Written permission recorded (form B13) — required to publish
+  permissionGranted Boolean @default(false)
+  permissionNote String?
+  rating        Int?
+  published     Boolean  @default(false)
+  sourceSurveyId String?
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  uploadId    String
+  caption     String
+  alt         String
+  category    String?  /// fleet | team-in-action (no identifiable faces without consent) | port | event
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+/// Company history content model (History & Roadmap brief §10)
+model HistoryEntry {
+  id                 String   @id @default(cuid())
+  year               String   /// "2011" or "2019–2020"
+  title              String
+  contractingCustomer String? /// PRIVATE unless permission
+  endClient          String?  /// PRIVATE unless permission
+  projectType        String?
+  locations          String[]
+  operationalNotes   String?
+  /// contracting-customer | end-client-project | company-recollection | operating-environment
+  evidenceLevel      String
+  /// HIDDEN | GENERIC (show generic wording) | NAMED (permission granted)
+  visibility         String   @default("HIDDEN")
+  genericSummary     String?
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  uploadId    String?
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// AI assistant
+// ---------------------------------------------------------------------------
+
+model AiConversation {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  language    String   @default("en")
+  messages    Json
+  /// Quote request created from the conversation, if any
+  quoteRequestId String?
+  leadEmail   String?
+  handoffRequested Boolean @default(false)
+  provider    String?
+  model       String?
+  ipHash      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AiReport {
+  id          String   @id @default(cuid())
+  kind        String   /// weekly-summary | lead-summary
+  periodStart DateTime?
+  periodEnd   DateTime?
+  content     String
+  data        Json?
+  createdAt   DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Auth tokens & integrations
+// ---------------------------------------------------------------------------
+
+/// Password reset / email verification / magic-link tokens (hashed) for staff and customers.
+model AuthToken {
+  id          String    @id @default(cuid())
+  /// password-reset | email-verify | invite
+  purpose     String
+  subjectType String    /// user | customer
+  subjectId   String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([subjectType, subjectId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String    /// stripe | easypost | twilio | hubspot | quickbooks
+  eventId     String
+  type        String
+  payload     Json
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+}

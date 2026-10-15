@@ -18,3 +18,11 @@ export const quoteReference = (d = new Date()) => `EB-Q-${yymmdd(d)}-${code(4)}`
 /** Order reference, e.g. EB-261015-7K3P; pieces are <ref>-01, -02… */
 export const orderReference = (d = new Date()) => `EB-${yymmdd(d)}-${code(4)}`;
 export const pieceId = (orderRef: string, n: number) => `${orderRef}-${String(n).padStart(2, "0")}`;
+/** Quotation reference, e.g. EB-QT-261015-7K3P */
+export const quotationReference = (d = new Date()) => `EB-QT-${yymmdd(d)}-${code(4)}`;
+/** Claim reference, e.g. EB-CL-261015-7K3P */
+export const claimReference = (d = new Date()) => `EB-CL-${yymmdd(d)}-${code(4)}`;
+/** Storage booking reference, e.g. EB-ST-261015-7K3P */
+export const storageReference = (d = new Date()) => `EB-ST-${yymmdd(d)}-${code(4)}`;
+/** Unguessable token for public links (quotation acceptance, invoices, surveys). */
+export const publicToken = (len = 32) => code(len);
